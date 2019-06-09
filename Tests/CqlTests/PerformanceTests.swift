@@ -28,7 +28,8 @@ class PerformanceTests: XCTestCase {
 			.table(SmallIntId.self),
 			.table(SmallStringId.self),
 			.table(SmallUuidId.self),
-			.table(MediumIntId.self)
+			.table(MediumIntId.self),
+			.table(MediumIntIdCustom.self)
 			])
 		return db
 	}
@@ -97,6 +98,12 @@ class PerformanceTests: XCTestCase {
 			try conn.insert(m)
 		}
 	}
+	func testMediumCustomInsert() {
+		self.insertTest(batches: 1, size: 1000) { conn in
+			let m = createMediumCustom(conn)
+			try conn.insert(m)
+		}
+	}
 	func testRawSqliteInsert() {
 		do {
 			// init the database
@@ -152,7 +159,27 @@ class PerformanceTests: XCTestCase {
 			XCTFail(error.localizedDescription)
 		}
 	}
-	
+	func testMediumCustomFetch() {
+		do {
+			let db = try openTestDatabase()
+			let conn = try db.open()
+			let txn = try conn.beginTransaction()
+			for _ in 1...1000 {
+				try conn.insert(createMediumCustom(conn))
+			}
+			try txn.commit()
+			measure {
+				do {
+					let _ = try conn.find(Where.all(MediumIntIdCustom.self))
+				} catch {
+					XCTFail(error.localizedDescription)
+				}
+			}
+		} catch {
+			XCTFail(error.localizedDescription)
+		}
+	}
+
 	func testRawSqliteFetch() {
 		do {
 			let db = try openTestDatabase()
@@ -198,7 +225,17 @@ class PerformanceTests: XCTestCase {
 			notes: "object \(i) notes",
 			position: Double(i),
 			priority: i)
-
+	}
+	private func createMediumCustom(_ conn: StorageConnection) -> MediumIntIdCustom {
+		let i = try! conn.nextId(MediumIntIdCustom.self)
+		return MediumIntIdCustom(
+			id: i,
+			title: "object \(i)",
+			startDate: Date(),
+			endDate: nil,
+			notes: "object \(i) notes",
+			position: Double(i),
+			priority: i)
 	}
 }
 
@@ -219,6 +256,40 @@ fileprivate struct MediumIntId: PrimaryKeyTable {
 	var priority = 0
 	
 	static let primaryKey = \MediumIntId.id
+}
+
+fileprivate struct MediumIntIdCustom: PrimaryKeyTable {
+	var id: Int = 0
+	var title: String = ""
+	var startDate = Date(timeIntervalSinceReferenceDate: 0)
+	var endDate: Date? = nil
+	var notes: String? = nil
+	var position: Double = 0
+	var priority = 0
+	
+	static let primaryKey = \MediumIntIdCustom.id
+	private static func encode(_ object: MediumIntIdCustom, to builder: SqlBuilder) throws {
+		builder.add(name: "id", value: object.id)
+		builder.add(name: "title", value: object.title)
+		builder.add(name: "startDate", value: object.startDate)
+		builder.add(name: "endDate", value: object.endDate)
+		builder.add(name: "notes", value: object.notes)
+		builder.add(name: "position", value: object.position)
+		builder.add(name: "priority", value: object.priority)
+	}
+	private static func decode(from reader: SqlReader, prefix: String) throws -> MediumIntIdCustom {
+		let object = MediumIntIdCustom(
+			id: try reader.getInt(name: prefix + "id"),
+			title: try reader.getText(name: prefix + "title"),
+			startDate: try reader.getDate(name: prefix + "startDate"),
+			endDate: try reader.getNullableDate(name: prefix + "endDate"),
+			notes: try reader.getNullableText(name: prefix + "notes"),
+			position: try reader.getReal(name: prefix + "position"),
+			priority: try reader.getInt(name: prefix + "priority")
+		)
+		return object
+	}
+	static let sqlCoder = SqlCoder<MediumIntIdCustom>(encode: MediumIntIdCustom.encode, decode: MediumIntIdCustom.decode)
 }
 fileprivate struct SmallStringId: PrimaryKeyTable {
 	var id: String = ""

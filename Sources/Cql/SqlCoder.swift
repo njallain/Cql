@@ -9,13 +9,9 @@
 import Foundation
 
 public struct SqlCoder<T: Codable> {
-	let decode: (SqlReader, String) throws -> T
-	let encode: (T, SqlBuilder) throws -> Void
+	var encode: (T, SqlBuilder) throws -> Void = SqlCoder<T>.standardEncode
+	var decode: (SqlReader, String) throws -> T = SqlCoder<T>.standardDecode
 
-	init() {
-		self.decode = SqlCoder<T>.standardDecode
-		self.encode = SqlCoder<T>.standardEncode
-	}
 	private static func standardEncode(_ object: T, to builder: SqlBuilder) throws {
 		try object.encode(to: SqlEncoder(to: builder))
 	}
