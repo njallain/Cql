@@ -204,7 +204,7 @@ extension SqlCoder {
 	}
 
 	private func record(_ row: T) throws -> ArgumentBuilder {
-		let builder = ArgumentBuilder()
+		let builder = ArgumentBuilder(collectTypes: true)
 		try self.encode(row, builder)
 		return builder
 	}
@@ -240,7 +240,7 @@ extension SqlCoder {
 	
 	private func scrambled(_ obj: T) throws -> T {
 		let recorded = try record(obj)
-		let scrambler = SqlValueScrambler(startingValues: recorded.valuesByName, intRepresentibles: recorded.intRepresentibles, stringRepresentibles: recorded.stringRepresentibles)
+		let scrambler = SqlValueScrambler(startingValues: recorded.valuesByName, intRepresentibles: recorded.intRepresentibles!, stringRepresentibles: recorded.stringRepresentibles!)
 		return try self.decode(scrambler, "")
 	}
 	private func detectDifferences(source: [String:SqlValue], target: [String: SqlValue]) -> [String: SqlValue] {

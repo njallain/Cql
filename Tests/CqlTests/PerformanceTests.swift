@@ -42,8 +42,6 @@ class PerformanceTests: XCTestCase {
 		cleanup()
 	}
 	
-	let batchSize = 100
-	let numBatches = 100
 	private func insertInt(conn: StorageConnection) throws {
 		let id = try conn.nextId(SmallIntId.self)
 		let row = SmallIntId(id: id, name: "row \(id)")
@@ -55,9 +53,9 @@ class PerformanceTests: XCTestCase {
 			let conn = try db.open()
 			self.measure {
 				do {
-					for _ in 0 ... numBatches {
+					for _ in 0 ..< batches {
 						let txn = try conn.beginTransaction()
-						for _ in 0 ... batchSize {
+						for _ in 0 ..< size {
 							try insertFn(conn)
 						}
 						try txn.commit()
@@ -71,7 +69,7 @@ class PerformanceTests: XCTestCase {
 		}
 	}
 	private func insertTest(insertFn: (StorageConnection) throws -> Void) {
-		insertTest(batches: numBatches, size: batchSize, insertFn: insertFn)
+		insertTest(batches: 100, size: 100, insertFn: insertFn)
 	}
 	
 	func testIntIds() {
@@ -119,15 +117,24 @@ class PerformanceTests: XCTestCase {
 					try driver.beginTransaction()
 					for _ in 1...1000 {
 						let m = createMedium(conn)
-						let args = [SqlArgument(name: "id", value: .int(m.id)),
-												SqlArgument(name: "title", value: .text(m.title)),
-												SqlArgument(name: "startDate", value: .date(m.startDate)),
-												SqlArgument(name: "endDate", value: .null),
-												SqlArgument(name: "notes", value: .text(m.notes!)),
-												SqlArgument(name: "position", value: .real(m.position)),
-												SqlArgument(name: "priority", value: .int(m.priority))
-												]
-						try driver.execute(sql: sql, arguments: args)
+						let b = ArgumentBuilder()
+						b.add(name: "id", value: m.id)
+						b.add(name: "title", value: m.title)
+						b.add(name: "startDate", value: m.startDate)
+						b.add(name: "endDate", value: m.endDate)
+						b.add(name: "notes", value: m.notes)
+						b.add(name: "position", value: m.position)
+						b.add(name: "priority", value: m.priority)
+
+//						let args = [SqlArgument(name: "id", value: .int(m.id)),
+//												SqlArgument(name: "title", value: .text(m.title)),
+//												SqlArgument(name: "startDate", value: .date(m.startDate)),
+//												SqlArgument(name: "endDate", value: .null),
+//												SqlArgument(name: "notes", value: .text(m.notes!)),
+//												SqlArgument(name: "position", value: .real(m.position)),
+//												SqlArgument(name: "priority", value: .int(m.priority))
+//												]
+						try driver.execute(sql: sql, arguments: b.values)
 					}
 					try driver.commitTransaction()
 				} catch {

@@ -32,7 +32,7 @@ public class SqlPredicateCompiler<T: Codable>: SqlCompiler {
 		self.database = database
 		self.aliasId = aliasId
 		self.useAlias = useAlias
-		self.table = database.schema(for: T.self)!
+		self.table = database.schema(for: T.self)
 	}
 	
 	func childCompiler<C: Codable>(for type: C.Type) -> SqlPredicateCompiler<C> {

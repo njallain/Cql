@@ -10,8 +10,14 @@ import Foundation
 
 class ArgumentBuilder: SqlBuilder {
 	var values: [SqlArgument] = []
-	var intRepresentibles: [String: SqlIntRepresentible.Type] = [:]
-	var stringRepresentibles: [String: SqlStringRepresentible.Type] = [:]
+	var intRepresentibles: [String: SqlIntRepresentible.Type]? = nil
+	var stringRepresentibles: [String: SqlStringRepresentible.Type]? = nil
+	init(collectTypes: Bool = false) {
+		if collectTypes {
+			intRepresentibles = [String: SqlIntRepresentible.Type]()
+			stringRepresentibles = [String: SqlStringRepresentible.Type]()
+		}
+	}
 	var valuesByName: [String: SqlValue] {
 		Dictionary<String, SqlValue>(uniqueKeysWithValues: values.map { ($0.name, $0.value )})
 	}
@@ -87,10 +93,10 @@ class ArgumentBuilder: SqlBuilder {
 	}
 	func add(name: String, value: SqlIntRepresentible, type: SqlIntRepresentible.Type) {
 		values.append(SqlArgument(name: name, value: .int(value.intValue)))
-		intRepresentibles[name] = type
+		collect(name, type: type)
 	}
 	func add(name: String, value: SqlIntRepresentible?, type: SqlIntRepresentible.Type) {
-		intRepresentibles[name] = type
+		collect(name, type: type)
 		if let value = value {
 			values.append(SqlArgument(name: name, value: .int(value.intValue)))
 		} else {
@@ -98,11 +104,11 @@ class ArgumentBuilder: SqlBuilder {
 		}
 	}
 	func add(name: String, value: SqlStringRepresentible, type: SqlStringRepresentible.Type) {
-		stringRepresentibles[name] = type
+		collect(name, type: type)
 		values.append(SqlArgument(name: name, value: .text(value.stringValue)))
 	}
 	func add(name: String, value: SqlStringRepresentible?, type: SqlStringRepresentible.Type) {
-		stringRepresentibles[name] = type
+		collect(name, type: type)
 		if let value = value {
 			values.append(SqlArgument(name: name, value: .text(value.stringValue)))
 		} else {
@@ -110,7 +116,12 @@ class ArgumentBuilder: SqlBuilder {
 		}
 
 	}
-
+	private func collect(_ name: String, type: SqlIntRepresentible.Type) {
+		self.intRepresentibles?[name] = type
+	}
+	private func collect(_ name: String, type: SqlStringRepresentible.Type) {
+		self.stringRepresentibles?[name] = type
+	}
 	func addEncoded<T: Encodable>(name: String, value: T) {
 		let encoder = JSONEncoder()
 		do {

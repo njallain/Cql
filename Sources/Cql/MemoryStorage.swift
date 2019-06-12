@@ -11,8 +11,8 @@ import Foundation
 public class MemoryStorage: Storage {
 	private var allRows: [String: [Any]] = [:]
 	fileprivate var nextIds: [String: Int] = [:]
-	public func schema<T: Codable>(for tableType: T.Type) -> TableSchema<T>? {
-		return nil
+	public func schema<T: Codable>(for tableType: T.Type) -> TableSchema<T> {
+		fatalError("MemoryStorage does not have schemas")
 	}
 	public func open() throws -> StorageConnection {
 		return MemoryConnection(storage: self)

@@ -11,9 +11,9 @@
 				<key>com.apple.XCTPerformanceMetric_WallClockTime</key>
 				<dict>
 					<key>baselineAverage</key>
-					<real>0.25344</real>
+					<real>0.25925</real>
 					<key>baselineIntegrationDisplayName</key>
-					<string>Jun 9, 2019 at 8:54:31 AM</string>
+					<string>Jun 9, 2019 at 4:04:59 PM</string>
 				</dict>
 			</dict>
 			<key>testMediumCustomFetch()</key>
@@ -21,9 +21,9 @@
 				<key>com.apple.XCTPerformanceMetric_WallClockTime</key>
 				<dict>
 					<key>baselineAverage</key>
-					<real>0.003296</real>
+					<real>0.0035481</real>
 					<key>baselineIntegrationDisplayName</key>
-					<string>Jun 9, 2019 at 8:54:31 AM</string>
+					<string>Jun 11, 2019 at 5:24:47 AM</string>
 				</dict>
 			</dict>
 			<key>testMediumCustomInsert()</key>
@@ -31,9 +31,9 @@
 				<key>com.apple.XCTPerformanceMetric_WallClockTime</key>
 				<dict>
 					<key>baselineAverage</key>
-					<real>0.39988</real>
+					<real>0.023313</real>
 					<key>baselineIntegrationDisplayName</key>
-					<string>Jun 9, 2019 at 8:54:31 AM</string>
+					<string>Jun 11, 2019 at 5:24:47 AM</string>
 				</dict>
 			</dict>
 			<key>testMediumFetch()</key>
@@ -41,9 +41,9 @@
 				<key>com.apple.XCTPerformanceMetric_WallClockTime</key>
 				<dict>
 					<key>baselineAverage</key>
-					<real>0.0054887</real>
+					<real>0.0059933</real>
 					<key>baselineIntegrationDisplayName</key>
-					<string>Jun 9, 2019 at 8:54:31 AM</string>
+					<string>Jun 11, 2019 at 5:24:47 AM</string>
 				</dict>
 			</dict>
 			<key>testMediumInsert()</key>
@@ -51,9 +51,9 @@
 				<key>com.apple.XCTPerformanceMetric_WallClockTime</key>
 				<dict>
 					<key>baselineAverage</key>
-					<real>0.41897</real>
+					<real>0.025352</real>
 					<key>baselineIntegrationDisplayName</key>
-					<string>Jun 9, 2019 at 8:54:31 AM</string>
+					<string>Jun 11, 2019 at 5:24:47 AM</string>
 				</dict>
 			</dict>
 			<key>testRawSqliteFetch()</key>
@@ -61,9 +61,9 @@
 				<key>com.apple.XCTPerformanceMetric_WallClockTime</key>
 				<dict>
 					<key>baselineAverage</key>
-					<real>0.0029827</real>
+					<real>0.0028554</real>
 					<key>baselineIntegrationDisplayName</key>
-					<string>Jun 9, 2019 at 8:54:31 AM</string>
+					<string>Jun 11, 2019 at 5:24:47 AM</string>
 				</dict>
 			</dict>
 			<key>testRawSqliteInsert()</key>
@@ -71,9 +71,9 @@
 				<key>com.apple.XCTPerformanceMetric_WallClockTime</key>
 				<dict>
 					<key>baselineAverage</key>
-					<real>0.013882</real>
+					<real>0.018337</real>
 					<key>baselineIntegrationDisplayName</key>
-					<string>Jun 9, 2019 at 8:54:31 AM</string>
+					<string>Jun 11, 2019 at 5:24:47 AM</string>
 				</dict>
 			</dict>
 			<key>testStringIds()</key>
@@ -81,9 +81,9 @@
 				<key>com.apple.XCTPerformanceMetric_WallClockTime</key>
 				<dict>
 					<key>baselineAverage</key>
-					<real>0.65062</real>
+					<real>0.64556</real>
 					<key>baselineIntegrationDisplayName</key>
-					<string>Jun 9, 2019 at 8:54:31 AM</string>
+					<string>Jun 9, 2019 at 4:04:59 PM</string>
 				</dict>
 			</dict>
 			<key>testUuids()</key>
@@ -91,9 +91,22 @@
 				<key>com.apple.XCTPerformanceMetric_WallClockTime</key>
 				<dict>
 					<key>baselineAverage</key>
-					<real>0.53032</real>
+					<real>0.52781</real>
 					<key>baselineIntegrationDisplayName</key>
-					<string>Jun 9, 2019 at 8:54:31 AM</string>
+					<string>Jun 9, 2019 at 4:04:59 PM</string>
+				</dict>
+			</dict>
+		</dict>
+		<key>SqlTests</key>
+		<dict>
+			<key>testPerformanceExample()</key>
+			<dict>
+				<key>com.apple.XCTPerformanceMetric_WallClockTime</key>
+				<dict>
+					<key>baselineAverage</key>
+					<real>8.4843e-06</real>
+					<key>baselineIntegrationDisplayName</key>
+					<string>Jun 11, 2019 at 5:24:47 AM</string>
 				</dict>
 			</dict>
 		</dict>

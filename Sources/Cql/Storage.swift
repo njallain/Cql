@@ -20,7 +20,7 @@ public protocol Storage {
 	Returns the schema for the given class/struct.
 	Will return nil in cases where the schema isn't defined
 	*/
-	func schema<T: Codable>(for tableType: T.Type) -> TableSchema<T>?
+	func schema<T: Codable>(for tableType: T.Type) -> TableSchema<T>
 }
 
 /**

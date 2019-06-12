@@ -64,7 +64,7 @@ public struct SchemaDefiner {
 }
 
 /**
-
+Provides both the locatiion and schema of a database.
 */
 public class Database: Storage {
 	static let versionTableName = "__SchemaVersion__"
@@ -104,8 +104,8 @@ public class Database: Storage {
 	public static func tableName<T: Codable>(of codableClass: T.Type) -> String {
 		return String(describing: codableClass)
 	}
-	public func schema<T: Codable>(for tableType: T.Type) -> TableSchema<T>? {
-		return tables[Database.tableName(of: tableType)] as? TableSchema<T>
+	public func schema<T: Codable>(for tableType: T.Type) -> TableSchema<T> {
+		return self.tables[Database.tableName(of: tableType)] as! TableSchema<T>
 	}
 	
 	/**
@@ -178,6 +178,7 @@ public class Database: Storage {
 public class SqlConnection: StorageConnection {
 	private let database: Database
 	private let driver: SqlDriver
+	private var insertStatementCache = [String: String]()
 	
 	fileprivate init(database: Database, driver: SqlDriver) {
 		self.database = database
@@ -193,22 +194,23 @@ public class SqlConnection: StorageConnection {
 	}
 	
 	public func insert<T: Codable>(_ rows: [T]) throws {
-		guard let schema = database.schema(for: T.self) else {
-			fatalError("schema not found for \(Database.tableName(of: T.self))")
-		}
+		let schema = database.schema(for: T.self)
 		for row in rows {
 			let args = try schema.sqlCoder.arguments(for: row)
-			let colSql = args.map({ $0.name }).joined(separator: ", ")
-			let valSql = args.map({ "{\($0.name)}" }).joined(separator: ", ")
-			let sql = "insert into \(Database.tableName(of: row)) (\(colSql)) values (\(valSql))"
-			try driver.execute(sql: sql, arguments: args)
+			if let sql = insertStatementCache[schema.name] {
+				try driver.execute(sql: sql, arguments: args)
+			} else {
+				let colSql = args.map({ $0.name }).joined(separator: ", ")
+				let valSql = args.map({ "{\($0.name)}" }).joined(separator: ", ")
+				let sql = "insert into \(Database.tableName(of: row)) (\(colSql)) values (\(valSql))"
+				insertStatementCache[schema.name] = sql
+				try driver.execute(sql: sql, arguments: args)
+			}
 		}
 	}
 	
 	public func update<T: Codable>(where predicate: Predicate<T>, set: (inout T) -> Void) throws {
-		guard let schema = database.schema(for: T.self) else {
-			fatalError("no table registered for \(String(describing:T.self))")
-		}
+		let schema = database.schema(for: T.self)
 		let sqlBuilder = SqlPredicateCompiler<T>(database: database, useAlias: false)
 		let clauses = sqlBuilder.compile(predicate)
 		let changes = try schema.sqlCoder.changes(for: schema.newRow, change: set)
@@ -220,9 +222,7 @@ public class SqlConnection: StorageConnection {
 		try driver.execute(sql: sql, arguments: args)
 	}
 	public func update<T: PrimaryKeyTable>(_ rows: [T]) throws {
-		guard let schema = database.schema(for: T.self) else {
-			throw DatabaseError("table \(Database.tableName(of: T.self)) not registered")
-		}
+		let schema = database.schema(for: T.self)
 		var sql = ""
 		for row in rows {
 			let values = try schema.sqlCoder.arguments(for: row)
@@ -237,9 +237,7 @@ public class SqlConnection: StorageConnection {
 		}
 	}
 	public func delete<T: Codable>(_ predicate: Predicate<T>) throws {
-		guard let schema = database.schema(for: T.self) else {
-			fatalError("no table registered for \(String(describing:T.self))")
-		}
+		let schema = database.schema(for: T.self)
 		let sqlBuilder = SqlPredicateCompiler<T>(database: database, useAlias: false)
 		let clauses = sqlBuilder.compile(predicate)
 		let whereSql = clauses.whereClause.isEmpty ? "" : "where " + clauses.whereClause
@@ -247,9 +245,7 @@ public class SqlConnection: StorageConnection {
 		try driver.execute(sql: sql, arguments: sqlBuilder.arguments)
 	}
 	public func find<T: Codable>(_ predicate: Predicate<T>, pagedBy: Int, results: ([T]) -> Bool) throws {
-		guard let schema = database.schema(for: T.self) else {
-			fatalError("no table registered for \(String(describing:T.self))")
-		}
+		let schema = database.schema(for: T.self)
 		let sqlBuilder = SqlPredicateCompiler<T>(database: database)
 		let sql = sqlBuilder.compile(predicate)
 		let cur = try driver.query(sql: sql.fullSql, bind: sql.selectColumns, arguments:sql.arguments)
@@ -267,9 +263,8 @@ public class SqlConnection: StorageConnection {
 	}
 	
 	public func find<T1: Codable, T2: Codable>(_ predicate: JoinedPredicate<T1, T2>, pagedBy: Int, results: ([(T1,T2)]) -> Bool) throws {
-		guard let leftSchema = database.schema(for: T1.self), let rightSchema = database.schema(for: T2.self) else {
-			fatalError("no table registered for \(String(describing:T1.self)) or \(String(describing: T2.self))")
-		}
+		let leftSchema = database.schema(for: T1.self)
+		let rightSchema = database.schema(for: T2.self)
 		let compiler = SqlPredicateCompiler<T1>(database: database)
 		let (sql, rightCompiler) = compiler.compile(predicate)
 		let cur = try driver.query(sql: sql.fullSql, bind: sql.selectColumns, arguments:sql.arguments)
@@ -289,9 +284,7 @@ public class SqlConnection: StorageConnection {
 	}
 	
 	public func nextId<T>(_ type: T.Type) throws -> Int where T : PrimaryKeyTable, T.Key == Int {
-		guard let schema = database.schema(for: type) else {
-			fatalError("no schema for type: \(type)")
-		}
+		let schema = database.schema(for: type)
 		if let id = database.nextIds[schema.name] {
 			database.nextIds[schema.name] = id + 1
 			return id
