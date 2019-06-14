@@ -157,11 +157,17 @@ public struct AnySubPredicate<Property: SqlComparable> {
 	let evaluate: (PredicateEvaluatorProtocol, Property) -> Bool
 }
 
-public class Predicate<Model: Codable> {
+public final class Predicate<Model: Codable> {
+	public static func any(_ model: Model.Type) -> Self {
+		return Self(PredicateComposition.any)
+	}
+	public static func all(_ model: Model.Type) -> Self {
+		return Self(PredicateComposition.any)
+	}
 	private let composition: PredicateComposition
 	private var parts: [AnyPredicatePart<Model>] = []
 	//private var joins: [AnyPredicateJoin<Model>] = []
-	fileprivate init(_ composition: PredicateComposition) {
+	required init(_ composition: PredicateComposition) {
 		self.composition = composition
 	}
 	public func property<V: SqlComparable>(_ path: WritableKeyPath<Model, V>, _ valueOperator: PredicateValueOperator<V>) -> Predicate<Model> {

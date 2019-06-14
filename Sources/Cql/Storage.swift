@@ -71,20 +71,20 @@ public extension StorageConnection {
 		try update([row])
 	}
 	func find<T: Codable>(_ predicate: Predicate<T>) throws -> [T] {
-		var results = [T]()
-		try self.find(predicate, pagedBy: 50) {
-			results.append(contentsOf: $0)
+		var results: [T]? = nil
+		try self.find(predicate, pagedBy: Int.max) {
+			results = $0
 			return true
 		}
-		return results
+		return results ?? []
 	}
 	func find<T1: Codable, T2: Codable>(_ predicate: JoinedPredicate<T1, T2>) throws -> [(T1,T2)] {
-		var results = [(T1, T2)]()
-		try self.find(predicate, pagedBy: 50) {
-			results.append(contentsOf: $0)
+		var results: [(T1, T2)]?
+		try self.find(predicate, pagedBy: Int.max) {
+			results = $0
 			return true
 		}
-		return results
+		return results ?? []
 	}
 	func find<T: PrimaryKeyTable, U: Codable>(_ relationship: RelationToMany<T, U>, of parent: T) throws -> [U] {
 		let id = parent[keyPath: T.primaryKey]
