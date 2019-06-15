@@ -162,7 +162,7 @@ public final class Predicate<Model: Codable> {
 		return Self(PredicateComposition.any)
 	}
 	public static func all(_ model: Model.Type) -> Self {
-		return Self(PredicateComposition.any)
+		return Self(PredicateComposition.all)
 	}
 	private let composition: PredicateComposition
 	private var parts: [AnyPredicatePart<Model>] = []
