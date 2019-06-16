@@ -9,37 +9,18 @@
 import XCTest
 @testable import Cql
 
-class DatabaseTests: XCTestCase {
+class DatabaseTests: SqiliteTestCase {
 
-	private let dbName = "databasetest"
-	
-	private var tempDir: URL {
-		return FileManager.default.temporaryDirectory
-	}
-	func cleanup() {
-		let db = tempDir.appendingPathComponent(dbName + ".sqlite")
-		if (FileManager.default.fileExists(atPath: db.relativePath)) {
-			try! FileManager.default.removeItem(at: db)
-		}
-	}
 	
 	func openTestDatabase() throws -> Storage {
-		let db = Database(name: dbName, location: tempDir, provider: .sqlite, version: "1", tables: [
+		return try openDatabase([
 				.codable({SqliteTestObj()}),
 				.codable({Foo()}),
 				.table(FooChild.self),
 				.table(KeyedFoo.self)
 			])
-		return db
 	}
 	
-	override func setUp() {
-		cleanup()
-	}
-	
-	override func tearDown() {
-		cleanup()
-	}
 
 	func testInsert() {
 		do {

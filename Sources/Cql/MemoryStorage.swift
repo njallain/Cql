@@ -169,6 +169,7 @@ public class PredicateEvaluator<T: Codable>: PredicateEvaluatorProtocol {
 		return storage.rows(T.self).filter { predicate.evaluate(evaluator: self, $0) }
 	}
 	
+	
 	func evaluate<V: SqlComparable>(_ value: V, _ valueOperator: PredicateValueOperator<V>) -> Bool {
 		switch valueOperator {
 		case .equal(let v):
