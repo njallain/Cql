@@ -99,12 +99,12 @@ public class MemoryConnection: StorageConnection {
 		let rows = storage.rows(T.self).filter { !predicate.evaluate(evaluator: eval, $0) }
 		storage.set(rows: rows)
 	}
-	public func find<T: Codable>(_ predicate: Predicate<T>, pagedBy: Int, results: ([T]) -> Bool) throws {
+	public func find<T: Codable>(query: Query<T>, results: ([T]) -> Bool) throws {
 		let eval = PredicateEvaluator<T>(storage: self.storage)
 		var partialResults = [T]()
-		for row in eval.findAll(predicate) {
+		for row in eval.findAll(query.predicate) {
 			partialResults.append(row)
-			if partialResults.count == pagedBy {
+			if partialResults.count == query.pageSize {
 				if results(partialResults) { partialResults.removeAll() }
 				else { return }
 			}
@@ -114,20 +114,20 @@ public class MemoryConnection: StorageConnection {
 		}
 	}
 	
-	public func find<T1: Codable, T2: Codable>(_ predicate: JoinedPredicate<T1, T2>, pagedBy: Int, results: ([(T1,T2)]) -> Bool) throws {
+	public func find<T1: Codable, T2: Codable>(query: JoinedQuery<T1, T2>, results: ([(T1,T2)]) -> Bool) throws {
 		let leftEval = PredicateEvaluator<T1>(storage: self.storage)
 		let rightEval = PredicateEvaluator<T2>(storage: self.storage)
-		let leftObjs = leftEval.findAll(predicate.leftPredicate)
-		let rightObjs = rightEval.findAll(predicate.rightPredicate)
+		let leftObjs = leftEval.findAll(query.predicate.leftPredicate)
+		let rightObjs = rightEval.findAll(query.predicate.rightPredicate)
 		
 		var rows = [(T1, T2)]()
 		for leftObj in leftObjs {
 			let matches = rightObjs.filter { rightObj in
-				predicate.joinExpressions.reduce(true, {$0 && $1.evaluate(leftObj, rightObj)})
+				query.predicate.joinExpressions.reduce(true, {$0 && $1.evaluate(leftObj, rightObj)})
 			}
 			for rightObj in matches {
 				rows.append((leftObj, rightObj))
-				if rows.count == pagedBy {
+				if rows.count == query.pageSize {
 					if results(rows) { rows.removeAll() }
 					else { return }
 				}

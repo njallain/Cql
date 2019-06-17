@@ -38,7 +38,6 @@ public protocol StorageConnection {
 	func delete<T: PrimaryKeyTable>(_ row: T) throws
 	func delete<T: Codable>(_ predicate: Predicate<T>) throws
 	
-	func find<T: Codable>(_ predicate: Predicate<T>) throws -> [T]
 	/**
 	Finds pagedBy results at a time.
 	This is not asynchronous, it will only return when all results are processed or
@@ -46,7 +45,7 @@ public protocol StorageConnection {
 	The results function will be called however many times needed to return all results, or until it returns
 	false to stop the query.
 	*/
-	func find<T: Codable>(_ predicate: Predicate<T>, pagedBy: Int, results: ([T]) -> Bool) throws
+	func find<T: Codable>(query: Query<T>, results: ([T]) -> Bool) throws
 	/**
 	Finds pagedBy results at a time.
 	This is not asynchronous, it will only return when all results are processed or
@@ -54,10 +53,8 @@ public protocol StorageConnection {
 	The results function will be called however many times needed to return all results, or until it returns
 	false to stop the query.
 	*/
-	func find<T1: Codable, T2: Codable>(_ predicate: JoinedPredicate<T1, T2>, pagedBy: Int, results: ([(T1,T2)]) -> Bool) throws
-	func find<T1: Codable, T2: Codable>(_ predicate: JoinedPredicate<T1, T2>) throws -> [(T1,T2)]
-	func find<T: PrimaryKeyTable, U: Codable>(_ relationship: RelationToMany<T, U>, of parent: T) throws -> [U]
-	func find<T: PrimaryKeyTable, U: Codable>(_ relationship: RelationToMany<T, U>, of parents: Predicate<T>) throws -> [U]
+	func find<T1: Codable, T2: Codable>(query: JoinedQuery<T1, T2>, results: ([(T1,T2)]) -> Bool) throws
+	
 	func get<T: PrimaryKeyTable>(_ type: T.Type, _ id: T.Key) throws -> T?
 	func get<T: PrimaryKeyTable2>(_ type: T.Type, _ id1: T.Key1, _ id2: T.Key2) throws -> T?
 	func nextId<T: PrimaryKeyTable>(_ type: T.Type) throws -> Int where T.Key == Int
@@ -69,30 +66,6 @@ public extension StorageConnection {
 	}
 	func update<T: PrimaryKeyTable>(_ row: T) throws {
 		try update([row])
-	}
-	func find<T: Codable>(_ predicate: Predicate<T>) throws -> [T] {
-		var results: [T]? = nil
-		try self.find(predicate, pagedBy: Int.max) {
-			results = $0
-			return true
-		}
-		return results ?? []
-	}
-	func find<T1: Codable, T2: Codable>(_ predicate: JoinedPredicate<T1, T2>) throws -> [(T1,T2)] {
-		var results: [(T1, T2)]?
-		try self.find(predicate, pagedBy: Int.max) {
-			results = $0
-			return true
-		}
-		return results ?? []
-	}
-	func find<T: PrimaryKeyTable, U: Codable>(_ relationship: RelationToMany<T, U>, of parent: T) throws -> [U] {
-		let id = parent[keyPath: T.primaryKey]
-		let predicate = Where.all(U.self).property(relationship.keyPath, .equal(id))
-		return try find(predicate)
-	}
-	func find<T: PrimaryKeyTable, U: Codable>(_ relationship: RelationToMany<T, U>, of parents: Predicate<T>) throws -> [U] {
-		return []
 	}
 	func get<T: PrimaryKeyTable>(_ type: T.Type, _ id: T.Key) throws -> T? {
 		let predicate = Where.all(type).property(T.primaryKey, .equal(id))

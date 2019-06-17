@@ -244,15 +244,15 @@ public class SqlConnection: StorageConnection {
 		let sql = "delete from \(schema.name) \(whereSql)"
 		try driver.execute(sql: sql, arguments: sqlBuilder.arguments)
 	}
-	public func find<T: Codable>(_ predicate: Predicate<T>, pagedBy: Int, results: ([T]) -> Bool) throws {
+	public func find<T: Codable>(query: Query<T>, results: ([T]) -> Bool) throws {
 		let schema = database.schema(for: T.self)
 		let sqlBuilder = SqlPredicateCompiler<T>(database: database)
-		let sql = sqlBuilder.compile(predicate)
+		let sql = sqlBuilder.compile(query.predicate)
 		let cur = try driver.query(sql: sql.fullSql, bind: sql.selectColumns, arguments:sql.arguments)
 		var rows = [T]()
 		while let reader = try cur.next() {
 			rows.append(try schema.sqlCoder.decode(reader, sqlBuilder.tablePrefix))
-			if rows.count == pagedBy {
+			if rows.count == query.pageSize {
 				if results(rows) { rows.removeAll() }
 				else { return }
 			}
@@ -262,18 +262,18 @@ public class SqlConnection: StorageConnection {
 		}
 	}
 	
-	public func find<T1: Codable, T2: Codable>(_ predicate: JoinedPredicate<T1, T2>, pagedBy: Int, results: ([(T1,T2)]) -> Bool) throws {
+	public func find<T1: Codable, T2: Codable>(query: JoinedQuery<T1, T2>, results: ([(T1,T2)]) -> Bool) throws {
 		let leftSchema = database.schema(for: T1.self)
 		let rightSchema = database.schema(for: T2.self)
 		let compiler = SqlPredicateCompiler<T1>(database: database)
-		let (sql, rightCompiler) = compiler.compile(predicate)
+		let (sql, rightCompiler) = compiler.compile(query.predicate)
 		let cur = try driver.query(sql: sql.fullSql, bind: sql.selectColumns, arguments:sql.arguments)
 		var rows = [(T1, T2)]()
 		while let reader = try cur.next() {
 			let t1 = (try leftSchema.sqlCoder.decode(reader, compiler.tablePrefix))
 			let t2 = (try rightSchema.sqlCoder.decode(reader, rightCompiler.tablePrefix))
 			rows.append((t1,t2))
-			if rows.count == pagedBy {
+			if rows.count == query.pageSize {
 				if results(rows) { rows.removeAll() }
 				else { return }
 			}

@@ -7,25 +7,23 @@
 
 import Foundation
 
-public enum Order {
-	public static func by<T: Codable, P: SqlComparable>(_ path: WritableKeyPath<T, P>, descending: Bool = false) -> SingleOrder<T> {
-		return SingleOrder<T>().then(by: path, descending: descending)
-	}
-}
-public struct SingleOrder<T: Codable> {
+public struct Order<T: Codable> {
 	fileprivate init() {
 		self.properties = []
+	}
+	init<P: SqlComparable>(by path: WritableKeyPath<T,P>, descending: Bool = false) {
+		self.properties = [OrderByProperty(path, descending: descending)]
 	}
 	private init(properties: [OrderByProperty<T>]) {
 		self.properties = properties
 	}
 	var isOrderd: Bool { !properties.isEmpty }
 	
-	public func then<P: SqlComparable>(by path: WritableKeyPath<T, P>, descending: Bool = false) -> SingleOrder<T> {
+	public func then<P: SqlComparable>(by path: WritableKeyPath<T, P>, descending: Bool = false) -> Order<T> {
 		let p = OrderByProperty(path, descending: descending)
 		var props = properties
 		props.append(p)
-		return SingleOrder(properties: props)
+		return Order(properties: props)
 	}
 	func lessThan(_ lhs: T, _ rhs: T) -> Bool {
 		for prop in properties {
@@ -68,3 +66,19 @@ fileprivate struct OrderByProperty<T: Codable> {
 	}
 }
 
+public struct JoinedOrder<T: Codable, U: Codable> {
+	init(_ order: Order<T>) {
+		self.order = order
+	}
+	private let order: Order<T>
+	func lessThan(_ lhs: (T,U), _ rhs: (T,U)) -> Bool {
+		return order.lessThan(lhs.0, rhs.0)
+	}
+	func equalTo(_ lhs: (T,U), _ rhs: (T,U)) -> Bool {
+		return order.equalTo(lhs.0, rhs.0)
+	}
+	func sql(compiler: (SqlPredicateCompiler<T>, SqlPredicateCompiler<U>)) -> String {
+		return order.sql(compiler: compiler.0)
+	}
+
+}
