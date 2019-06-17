@@ -16,7 +16,7 @@ class OrderTests: SqiliteTestCase {
 		let c = AllTable(n: 4, s: "abc")
 		let c2 = AllTable(n: 4, s: "abc")
 		
-		var order = Order(by: \AllTable.n)
+		var order = Order.by(\AllTable.n)
 		XCTAssertTrue(order.lessThan(b, a))
 		XCTAssertFalse(order.lessThan(a, b))
 		XCTAssertFalse(order.lessThan(b, c))
@@ -35,7 +35,7 @@ class OrderTests: SqiliteTestCase {
 		let a = AllTable(n: 5, s: "abc")
 		let b = AllTable(n: 4, s: "def")
 		
-		let order = Order(by: \AllTable.n, descending: true)
+		let order = Order.by(\AllTable.n, descending: true)
 		XCTAssertFalse(order.lessThan(b, a))
 		XCTAssertTrue(order.lessThan(a, b))
 	}
@@ -44,7 +44,7 @@ class OrderTests: SqiliteTestCase {
 		do {
 			let database = try openDatabase([.table(AllTable.self)])
 			let compiler = SqlPredicateCompiler<AllTable>(database: database)
-			let order = Order(by: \AllTable.n).then(by: \AllTable.dt, descending: true)
+			let order = Order.by(\AllTable.n).then(by: \AllTable.dt, descending: true)
 			let sql = order.sql(compiler: compiler)
 			XCTAssertEqual("order by t0.n asc, t0.dt desc", sql)
 		} catch {

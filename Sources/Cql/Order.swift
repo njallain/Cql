@@ -7,24 +7,25 @@
 
 import Foundation
 
-protocol ResultRow {
-	func model<T: Codable>(_ type: T.Type) -> T
+public enum Order {
+	public static func by<T: Codable, P: SqlComparable>(_ path: WritableKeyPath<T, P>, descending: Bool = false) -> SingleOrder<T> {
+		return SingleOrder<T>().then(by: path, descending: descending)
+	}
 }
-
-public struct Order<T: Codable> {
-	public init<P: SqlComparable>(by path: WritableKeyPath<T, P>, descending: Bool = false) {
-		properties = [OrderByProperty(path, descending: descending)]
+public struct SingleOrder<T: Codable> {
+	fileprivate init() {
+		self.properties = []
 	}
 	private init(properties: [OrderByProperty<T>]) {
 		self.properties = properties
 	}
 	var isOrderd: Bool { !properties.isEmpty }
 	
-	public func then<P: SqlComparable>(by path: WritableKeyPath<T, P>, descending: Bool = false) -> Order<T> {
+	public func then<P: SqlComparable>(by path: WritableKeyPath<T, P>, descending: Bool = false) -> SingleOrder<T> {
 		let p = OrderByProperty(path, descending: descending)
 		var props = properties
 		props.append(p)
-		return Order(properties: props)
+		return SingleOrder(properties: props)
 	}
 	func lessThan(_ lhs: T, _ rhs: T) -> Bool {
 		for prop in properties {
@@ -66,3 +67,4 @@ fileprivate struct OrderByProperty<T: Codable> {
 		}
 	}
 }
+
