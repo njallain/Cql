@@ -185,7 +185,7 @@ public final class Predicate<Model: Codable> {
 		self.parts.append(AnyPredicatePart(part))
 		return self
 	}
-	public func sql(compiler: SqlPredicateCompiler<Model>) -> String {
+	func sql(compiler: SqlPredicateCompiler<Model>) -> String {
 		let predSqls = parts.map { $0.sql(compiler: compiler) }
 		let finalPred = predSqls.sqlJoined(separator: " \(composition.sql) ", { "(\($0))" })
 		return finalPred

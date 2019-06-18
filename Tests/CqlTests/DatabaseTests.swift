@@ -139,6 +139,28 @@ class DatabaseTests: SqiliteTestCase {
 		}
 	}
 	
+	func testFindWithOrder() {
+		do {
+			let db = try openTestDatabase()
+			let conn = try db.open()
+			let o = KeyedFoo(id: 7, name: "my name", description: "desc", senum: .val2, nenum: .val2)
+			let o2 = KeyedFoo(id: 8, name: "foo2", description: "desc", senum: .val1, nenum: nil)
+			let txn = try conn.beginTransaction()
+			try conn.insert([o, o2])
+			try txn.commit()
+			let pred = Where.all(KeyedFoo.self)
+			var results = try conn.find(Query(predicate: pred, order: Order(by: \KeyedFoo.name)))
+			XCTAssertEqual(2, results.count)
+			verify(o2, results[0])
+			verify(o, results[1])
+			results = try conn.find(Query(predicate: pred, order: Order(by: \KeyedFoo.name, descending: true)))
+			XCTAssertEqual(2, results.count)
+			verify(o2, results[1])
+			verify(o, results[0])
+		} catch {
+			XCTFail(error.localizedDescription)
+		}
+	}
 	func testFindJoinedObjects() {
 		do {
 			let db = try openTestDatabase()
@@ -164,9 +186,33 @@ class DatabaseTests: SqiliteTestCase {
 		} catch {
 			XCTFail(error.localizedDescription)
 		}
-
 	}
-	
+
+	func testOrderedJoinedObjects() {
+		do {
+			let db = try openTestDatabase()
+			let conn = try db.open()
+			let o = KeyedFoo(id: 7, name: "my name", description: "desc", senum: .val2, nenum: .val2)
+			let o2 = KeyedFoo(id: 8, name: "foo2", description: "desc", senum: .val1, nenum: nil)
+			let child1 = FooChild(fooId: 7, name: "first")
+			let child3 = FooChild(fooId: 8, name: "another")
+			let txn = try conn.beginTransaction()
+			try conn.insert([o, o2])
+			try conn.insert([child1, child3])
+			try txn.commit()
+			let pred = Where.all(KeyedFoo.self)
+				.join(children: KeyedFoo.children, Where.all(FooChild.self))
+			let order = JoinedOrder(Order(by: \KeyedFoo.name), FooChild.self)
+			let query = JoinedQuery(predicate: pred, order: order)
+			let results = try conn.find(query)
+			XCTAssertEqual(2, results.count)
+			verify(o2, results.map({$0.0})[0])
+			verify(o, results.map({$0.0})[1])
+		} catch {
+			XCTFail(error.localizedDescription)
+		}
+	}
+
 	func testNextId() {
 		do {
 			let db = try openTestDatabase()

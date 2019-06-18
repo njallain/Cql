@@ -9,30 +9,10 @@
 import XCTest
 @testable import Cql
 
-class SqlPredicateBuilderTests: XCTestCase {
-	private let dbName = "databasetest"
-	
-	private var tempDir: URL {
-		return FileManager.default.temporaryDirectory
-	}
-	private func cleanup() {
-		let db = tempDir.appendingPathComponent(dbName + ".sqlite")
-		if (FileManager.default.fileExists(atPath: db.relativePath)) {
-			try! FileManager.default.removeItem(at: db)
-		}
-	}
-	
+class SqlPredicateBuilderTests: SqiliteTestCase {
+
 	private func openTestDatabase() throws -> Database {
-		let db = Database(name: dbName, location: tempDir, provider: .sqlite, version: "1", tables: [.table(PredTest.self), .table(Child.self)])
-		return db
-	}
-	
-	override func setUp() {
-		cleanup()
-	}
-	
-	override func tearDown() {
-		cleanup()
+		return try openDatabase([.table(PredTest.self), .table(Child.self)])
 	}
 	
 	func testSqlPredicate() {
@@ -96,6 +76,17 @@ class SqlPredicateBuilderTests: XCTestCase {
 			XCTFail("\(error.localizedDescription)")
 		}
 
+	}
+	func testOrderedQuery() {
+		do {
+			let db = try openTestDatabase()
+			let query = Query(predicate: Where.all(PredTest.self), order: Order(by: \PredTest.name))
+			let compiler = SqlPredicateCompiler<PredTest>(database: db)
+			let sql = compiler.compile(query)
+			XCTAssertEqual("order by t0.name asc", sql.orderClause)
+		} catch {
+			XCTFail("\(error.localizedDescription)")
+		}
 	}
 //	func testToManyJoin() {
 //		do {

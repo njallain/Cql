@@ -67,7 +67,7 @@ fileprivate struct OrderByProperty<T: Codable> {
 }
 
 public struct JoinedOrder<T: Codable, U: Codable> {
-	init(_ order: Order<T>) {
+	init(_ order: Order<T>, _ leftType: U.Type) {
 		self.order = order
 	}
 	private let order: Order<T>

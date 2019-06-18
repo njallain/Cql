@@ -8,17 +8,18 @@
 
 import Foundation
 
-public struct CompiledSql {
+struct CompiledSql {
 	let fullSql: String
 	let selectColumns: [String]
 	let whereClause: String
+	let orderClause: String
 	let arguments: [SqlArgument]
 }
 protocol SqlCompiler: AnyObject {
 	var arguments: [SqlArgument] {get set}
 	func childCompiler<C: Codable>(for type: C.Type) -> SqlPredicateCompiler<C>
 }
-public class SqlPredicateCompiler<T: Codable>: SqlCompiler {
+class SqlPredicateCompiler<T: Codable>: SqlCompiler {
 	let database: Storage
 	private let aliasId: Int
 	private let useAlias: Bool
@@ -46,19 +47,22 @@ public class SqlPredicateCompiler<T: Codable>: SqlCompiler {
 		return "\(tablePrefix)\(n.name)"
 	}
 	func compile(_ predicate: Predicate<T>) -> CompiledSql {
+		return compile(Query(predicate: predicate))
+	}
+	func compile(_ query: Query<T>) -> CompiledSql {
 		let colNames = table.columns.map({ "\(tablePrefix)\($0.name)" })
 		let colSql = colNames.joined(separator: ", ")
-		let whereClause = predicate.sql(compiler: self)
+		let whereClause = query.predicate.sql(compiler: self)
 		let whereSql = whereClause.isEmpty ? "" : "where " + whereClause
-		let fullSql = "select \(colSql) from \(table.name) as \(tableAlias) \(whereSql)"
-		return CompiledSql(fullSql: fullSql, selectColumns: colNames, whereClause: whereClause, arguments: self.arguments)
+		let orderSql = query.order?.sql(compiler: self) ?? ""
+		let fullSql = "select \(colSql) from \(table.name) as \(tableAlias) \(whereSql) \(orderSql)"
+		return CompiledSql(fullSql: fullSql, selectColumns: colNames, whereClause: whereClause, orderClause: orderSql, arguments: self.arguments)
 	}
-
-	func compile<T2: Codable>(_ predicate: JoinedPredicate<T, T2>) -> (CompiledSql, SqlPredicateCompiler<T2>) {
-		let leftSql = self.compile(predicate.leftPredicate)
+	func compile<T2: Codable>(_ query: JoinedQuery<T, T2>) -> (CompiledSql, SqlPredicateCompiler<T2>) {
+		let leftSql = self.compile(query.predicate.leftPredicate)
 		let rightCompiler = self.childCompiler(for: T2.self)
-		let rightSql = rightCompiler.compile(predicate.rightPredicate)
-		let joins = predicate.joinExpressions.map {
+		let rightSql = rightCompiler.compile(query.predicate.rightPredicate)
+		let joins = query.predicate.joinExpressions.map {
 			"\($0.leftName(self)) = \($0.rightName(rightCompiler))"
 		}
 		let whereClause = [leftSql.whereClause, rightSql.whereClause].sqlJoinedGroups(separator: " and ")
@@ -66,8 +70,9 @@ public class SqlPredicateCompiler<T: Codable>: SqlCompiler {
 		let joinSql = joins.sqlJoinedGroups(separator: " and ")
 		let cols = leftSql.selectColumns + rightSql.selectColumns
 		let colSql = cols.joined(separator: ", ")
+		let orderSql = query.order?.sql(compiler: (self, rightCompiler)) ?? ""
 		let fullSql = "select \(colSql) from \(table.name) as \(tableAlias) join \(rightCompiler.table.name) as \(rightCompiler.tableAlias) on \(joinSql)\(whereSql)"
-		return (CompiledSql(fullSql: fullSql, selectColumns: cols, whereClause: whereClause, arguments: leftSql.arguments + rightSql.arguments), rightCompiler)
+		return (CompiledSql(fullSql: fullSql, selectColumns: cols, whereClause: whereClause, orderClause: orderSql, arguments: leftSql.arguments + rightSql.arguments), rightCompiler)
 	}
 	func add(argument: SqlValue) -> String {
 		let arg = SqlArgument(name: "\(argPrefix)\(arguments.count)", value: argument)

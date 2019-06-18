@@ -247,7 +247,7 @@ public class SqlConnection: StorageConnection {
 	public func find<T: Codable>(query: Query<T>, results: ([T]) -> Bool) throws {
 		let schema = database.schema(for: T.self)
 		let sqlBuilder = SqlPredicateCompiler<T>(database: database)
-		let sql = sqlBuilder.compile(query.predicate)
+		let sql = sqlBuilder.compile(query)
 		let cur = try driver.query(sql: sql.fullSql, bind: sql.selectColumns, arguments:sql.arguments)
 		var rows = [T]()
 		while let reader = try cur.next() {
@@ -266,7 +266,7 @@ public class SqlConnection: StorageConnection {
 		let leftSchema = database.schema(for: T1.self)
 		let rightSchema = database.schema(for: T2.self)
 		let compiler = SqlPredicateCompiler<T1>(database: database)
-		let (sql, rightCompiler) = compiler.compile(query.predicate)
+		let (sql, rightCompiler) = compiler.compile(query)
 		let cur = try driver.query(sql: sql.fullSql, bind: sql.selectColumns, arguments:sql.arguments)
 		var rows = [(T1, T2)]()
 		while let reader = try cur.next() {

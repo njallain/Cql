@@ -102,7 +102,11 @@ public class MemoryConnection: StorageConnection {
 	public func find<T: Codable>(query: Query<T>, results: ([T]) -> Bool) throws {
 		let eval = PredicateEvaluator<T>(storage: self.storage)
 		var partialResults = [T]()
-		for row in eval.findAll(query.predicate) {
+		var all = eval.findAll(query.predicate)
+		if let order = query.order {
+			all.sort(by: order.lessThan)
+		}
+		for row in all {
 			partialResults.append(row)
 			if partialResults.count == query.pageSize {
 				if results(partialResults) { partialResults.removeAll() }
@@ -125,15 +129,20 @@ public class MemoryConnection: StorageConnection {
 			let matches = rightObjs.filter { rightObj in
 				query.predicate.joinExpressions.reduce(true, {$0 && $1.evaluate(leftObj, rightObj)})
 			}
-			for rightObj in matches {
-				rows.append((leftObj, rightObj))
-				if rows.count == query.pageSize {
-					if results(rows) { rows.removeAll() }
-					else { return }
-				}
+			rows.append(contentsOf: matches.map({(leftObj, $0)}))
+		}
+		if let order = query.order {
+			rows.sort(by: order.lessThan)
+		}
+		var resultRows = [(T1, T2)]()
+		for row in rows {
+			resultRows.append(row)
+			if resultRows.count == query.pageSize {
+				if results(rows) { rows.removeAll() }
+				else { return }
 			}
 		}
-		if rows.count > 0 {
+		if resultRows.count > 0 {
 			_ = results(rows)
 		}
 	}
