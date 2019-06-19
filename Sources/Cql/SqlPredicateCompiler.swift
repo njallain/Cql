@@ -71,7 +71,7 @@ class SqlPredicateCompiler<T: Codable>: SqlCompiler {
 		let cols = leftSql.selectColumns + rightSql.selectColumns
 		let colSql = cols.joined(separator: ", ")
 		let orderSql = query.order?.sql(compiler: (self, rightCompiler)) ?? ""
-		let fullSql = "select \(colSql) from \(table.name) as \(tableAlias) join \(rightCompiler.table.name) as \(rightCompiler.tableAlias) on \(joinSql)\(whereSql)"
+		let fullSql = "select \(colSql) from \(table.name) as \(tableAlias) join \(rightCompiler.table.name) as \(rightCompiler.tableAlias) on \(joinSql)\(whereSql) \(orderSql)"
 		return (CompiledSql(fullSql: fullSql, selectColumns: cols, whereClause: whereClause, orderClause: orderSql, arguments: leftSql.arguments + rightSql.arguments), rightCompiler)
 	}
 	func add(argument: SqlValue) -> String {

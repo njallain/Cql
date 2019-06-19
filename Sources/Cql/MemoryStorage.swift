@@ -113,9 +113,7 @@ public class MemoryConnection: StorageConnection {
 				else { return }
 			}
 		}
-		if partialResults.count > 0 {
-			_ = results(partialResults)
-		}
+		_ = results(partialResults)
 	}
 	
 	public func find<T1: Codable, T2: Codable>(query: JoinedQuery<T1, T2>, results: ([(T1,T2)]) -> Bool) throws {
@@ -142,9 +140,7 @@ public class MemoryConnection: StorageConnection {
 				else { return }
 			}
 		}
-		if resultRows.count > 0 {
-			_ = results(rows)
-		}
+		_ = results(rows)
 	}
 	
 	public func nextId<T>(_ type: T.Type) throws -> Int where T : PrimaryKeyTable, T.Key == Int {
