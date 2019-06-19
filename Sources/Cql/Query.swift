@@ -8,6 +8,11 @@
 import Foundation
 
 public struct Query<T: Codable> {
+	public init(predicate: Predicate<T>, pageSize: Int = Int.max, order: Order<T>? = nil) {
+		self.predicate = predicate
+		self.pageSize = pageSize
+		self.order = order
+	}
 	let predicate: Predicate<T>
 	var pageSize: Int = Int.max
 	var order: Order<T>? = nil
@@ -15,6 +20,11 @@ public struct Query<T: Codable> {
 }
 
 public struct JoinedQuery<T: Codable, U: Codable> {
+	public init(predicate: JoinedPredicate<T,U>, pageSize: Int = Int.max, order: JoinedOrder<T,U>? = nil) {
+		self.predicate = predicate
+		self.pageSize = pageSize
+		self.order = order
+	}
 	let predicate: JoinedPredicate<T,U>
 	var pageSize: Int = Int.max
 	var order: JoinedOrder<T, U>? = nil
