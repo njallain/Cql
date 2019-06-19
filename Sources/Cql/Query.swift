@@ -66,7 +66,7 @@ public extension StorageConnection {
 		}
 		return results ?? []
 	}
-	func find<T: PrimaryKeyTable, U: Codable>(_ relationship: RelationToMany<T, U>, of parent: T) throws -> [U] {
+	func findRelated<T: PrimaryKeyTable, U: Codable>(_ relationship: RelationToMany<T, U>, of parent: T) throws -> [U] {
 		let id = parent[keyPath: T.primaryKey]
 		let predicate = Where.all(U.self).property(relationship.keyPath, .equal(id))
 		return try self.find(predicate)
