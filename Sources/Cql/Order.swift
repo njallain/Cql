@@ -11,7 +11,7 @@ public struct Order<T: Codable> {
 	fileprivate init() {
 		self.properties = []
 	}
-	init<P: SqlComparable>(by path: WritableKeyPath<T,P>, descending: Bool = false) {
+	public init<P: SqlComparable>(by path: WritableKeyPath<T,P>, descending: Bool = false) {
 		self.properties = [OrderByProperty(path, descending: descending)]
 	}
 	private init(properties: [OrderByProperty<T>]) {
@@ -67,7 +67,7 @@ fileprivate struct OrderByProperty<T: Codable> {
 }
 
 public struct JoinedOrder<T: Codable, U: Codable> {
-	init(_ order: Order<T>, _ leftType: U.Type) {
+	public init(_ order: Order<T>, _ leftType: U.Type) {
 		self.order = order
 	}
 	private let order: Order<T>
