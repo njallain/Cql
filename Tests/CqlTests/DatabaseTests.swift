@@ -306,7 +306,8 @@ fileprivate struct ParentChild: SqlJoin {
 	var child = FooChild()
 	static let left = \ParentChild.parent
 	static let right = \ParentChild.child
-	static let relationship = JoinProperty(left: \KeyedFoo.id, right: \FooChild.fooId)
+//	static let relationship = JoinProperty(left: \KeyedFoo.id, right: \FooChild.fooId)
+	static let relationship = KeyedFoo.children.join
 }
 class MemoryStorageTests: DatabaseTests {
 	override func openTestDatabase() throws -> Storage {

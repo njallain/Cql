@@ -35,7 +35,7 @@ struct AnyJoinExpression<LeftModel: Codable, RightModel: Codable> {
 }
 
 
-public struct JoinedPredicate<LeftModel: Codable, RightModel: Codable> {
+struct JoinedPredicate<LeftModel: Codable, RightModel: Codable> {
 	var joinExpressions: [AnyJoinExpression<LeftModel, RightModel>]
 	let leftPredicate: Predicate<LeftModel>
 	let rightPredicate: Predicate<RightModel>
@@ -46,7 +46,7 @@ public struct JoinedPredicate<LeftModel: Codable, RightModel: Codable> {
 	}
 }
 
-public extension Predicate {
+extension Predicate {
 	func join<RightModel: Codable>(children relationship: RelationToMany<Model, RightModel>, _ predicate: Predicate<RightModel>) -> JoinedPredicate<Model, RightModel> {
 		let joinExpr = AnyJoinExpression(JoinExpression(left: Model.primaryKey, right: relationship.keyPath))
 		return JoinedPredicate(joinExpressions: [joinExpr], leftPredicate: self, rightPredicate: predicate)
