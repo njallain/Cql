@@ -11,10 +11,14 @@ public struct Order<T: Codable> {
 	fileprivate init() {
 		self.properties = []
 	}
+	/**
+	Creates an order by for a single table query
+	*/
 	public init<P: SqlComparable>(by path: WritableKeyPath<T,P>, descending: Bool = false) {
 		self.properties = [OrderByProperty(path, descending: descending)]
 	}
-	private init(properties: [OrderByProperty<T>]) {
+	
+	fileprivate init(properties: [OrderByProperty<T>]) {
 		self.properties = properties
 	}
 	var isOrderd: Bool { !properties.isEmpty }
@@ -46,10 +50,21 @@ public struct Order<T: Codable> {
 	private var properties: [OrderByProperty<T>] = []
 }
 
+//fileprivate protocol OrderPropertyProtocol {
+//	associatedtype T: Codable
+//	var lessThan: (T, T) -> Bool {get}
+//	var equalTo: (T, T) -> Bool {get}
+//	var sqlFn: (SqlPredicateCompiler<T>) -> String {get}
+//}
 fileprivate struct OrderByProperty<T: Codable> {
-	fileprivate let lessThan: (T, T) -> Bool
-	fileprivate let equalTo: (T, T) -> Bool
-	fileprivate let sqlFn: (SqlPredicateCompiler<T>) -> String
+	let lessThan: (T, T) -> Bool
+	let equalTo: (T, T) -> Bool
+	let sqlFn: (SqlPredicateCompiler<T>) -> String
+	init(lessThan: @escaping (T, T) -> Bool, equalTo: @escaping (T, T) -> Bool, sqlFn: @escaping (SqlPredicateCompiler<T>) -> String) {
+		self.lessThan = lessThan
+		self.equalTo = equalTo
+		self.sqlFn = sqlFn
+	}
 	init<P: SqlComparable>(_ property: WritableKeyPath<T, P>, descending: Bool = false) {
 		lessThan = { lhs, rhs in
 			let c = lhs[keyPath: property] < rhs[keyPath: property]
@@ -64,21 +79,42 @@ fileprivate struct OrderByProperty<T: Codable> {
 			return name + (descending ? " desc" : " asc")
 		}
 	}
+
 }
 
-public struct JoinedOrder<T: Codable, U: Codable> {
-	public init(_ order: Order<T>, _ leftType: U.Type) {
-		self.order = order
-	}
-	private let order: Order<T>
-	func lessThan(_ lhs: (T,U), _ rhs: (T,U)) -> Bool {
-		return order.lessThan(lhs.0, rhs.0)
-	}
-	func equalTo(_ lhs: (T,U), _ rhs: (T,U)) -> Bool {
-		return order.equalTo(lhs.0, rhs.0)
-	}
-	func sql(compiler: (SqlPredicateCompiler<T>, SqlPredicateCompiler<U>)) -> String {
-		return order.sql(compiler: compiler.0)
+public extension Order where T: SqlJoin {
+	/**
+	Creates an order for a joined query
+	- Parameter by the property of the joined table to sort by
+	- Parameter through The property on the join that represents the joined table
+	- Parameter descending If true the orders is descending
+	*/
+	init<J: Codable, P: SqlComparable>(by path: WritableKeyPath<J,P>, through join: WritableKeyPath<T, J>, descending: Bool = false) {
+		self.init(properties: [OrderByProperty(join, path, descending: descending)])
 	}
 
 }
+fileprivate extension OrderByProperty where T: SqlJoin {
+	init<J: Codable, P: SqlComparable>(_ join: WritableKeyPath<T, J>, _ property: WritableKeyPath<J, P>, descending: Bool = false) {
+		let fullPath = join.appending(path: property)
+		let lessThan: (T, T) -> Bool = { lhs, rhs in
+			let c = lhs[keyPath: fullPath] < rhs[keyPath: fullPath]
+			return descending ? !c : c
+		}
+		let equalTo: (T, T) -> Bool = { lhs, rhs in
+			return  lhs[keyPath: fullPath] == rhs[keyPath: fullPath]
+		}
+		
+		let sqlFn: (SqlPredicateCompiler<T>) -> String = { compiler in
+			let name = compiler.name(for: property, through: join)
+			return name + (descending ? " desc" : " asc")
+		}
+		self.init(lessThan: lessThan, equalTo: equalTo, sqlFn: sqlFn)
+	}
+}
+//fileprivate struct OrderByJoinedProperty<T: SqlJoin>: OrderPropertyProtocol {
+//	let lessThan: (T, T) -> Bool
+//	let equalTo: (T, T) -> Bool
+//	let sqlFn: (SqlPredicateCompiler<T>) -> String
+//
+//}

@@ -174,15 +174,15 @@ class DatabaseTests: SqiliteTestCase {
 			try conn.insert([o, o2])
 			try conn.insert([child1, child2, child3])
 			try txn.commit()
-			let pred = Where.all(KeyedFoo.self)
+			let leftPred = Predicate.all(KeyedFoo.self)
 				.property(\.id, .equal(7))
-				.join(children: KeyedFoo.children, Where.all(FooChild.self))
-			let results = try conn.find(pred)
+			let rightPred = Predicate.all(FooChild.self)
+			let results = try conn.find(JoinedQuery(ParentChild.self, left: leftPred, right: rightPred))
 			XCTAssertEqual(2, results.count)
-			verify(child1, results.map({$0.1}))
-			verify(child2, results.map({$0.1}))
-			verify(o, results.map({$0.0})[0])
-			verify(o, results.map({$0.0})[1])
+			verify(child1, results.map({$0.child}))
+			verify(child2, results.map({$0.child}))
+			verify(o, results.map({$0.parent})[0])
+			verify(o, results.map({$0.parent})[1])
 		} catch {
 			XCTFail(error.localizedDescription)
 		}
@@ -200,14 +200,14 @@ class DatabaseTests: SqiliteTestCase {
 			try conn.insert([o, o2])
 			try conn.insert([child1, child3])
 			try txn.commit()
-			let pred = Where.all(KeyedFoo.self)
-				.join(children: KeyedFoo.children, Where.all(FooChild.self))
-			let order = JoinedOrder(Order(by: \KeyedFoo.name), FooChild.self)
-			let query = JoinedQuery(predicate: pred, order: order)
+			let leftPred = Where.all(KeyedFoo.self)
+			let rightPred = Predicate.all(FooChild.self)
+			let order = Order(by: \KeyedFoo.name, through: \ParentChild.parent)
+			let query = JoinedQuery(ParentChild.self, left: leftPred, right: rightPred, order: order)
 			let results = try conn.find(query)
 			XCTAssertEqual(2, results.count)
-			verify(o2, results.map({$0.0})[0])
-			verify(o, results.map({$0.0})[1])
+			verify(o2, results.map({$0.parent})[0])
+			verify(o, results.map({$0.parent})[1])
 		} catch {
 			XCTFail(error.localizedDescription)
 		}
@@ -301,6 +301,13 @@ fileprivate struct FooChild: SqlTableRepresentable {
 	static let foreignKeys: [ForeignKeyRelation] = [parent]
 }
 
+fileprivate struct ParentChild: SqlJoin {
+	var parent = KeyedFoo()
+	var child = FooChild()
+	static let left = \ParentChild.parent
+	static let right = \ParentChild.child
+	static let relationship = JoinProperty(left: \KeyedFoo.id, right: \FooChild.fooId)
+}
 class MemoryStorageTests: DatabaseTests {
 	override func openTestDatabase() throws -> Storage {
 		return MemoryStorage()

@@ -116,23 +116,28 @@ public class MemoryConnection: StorageConnection {
 		_ = results(partialResults)
 	}
 	
-	public func find<T1: Codable, T2: Codable>(query: JoinedQuery<T1, T2>, results: ([(T1,T2)]) -> Bool) throws {
-		let leftEval = PredicateEvaluator<T1>(storage: self.storage)
-		let rightEval = PredicateEvaluator<T2>(storage: self.storage)
+	public func find<T: SqlJoin>(query: JoinedQuery<T>, results: ([T]) -> Bool) throws {
+		let leftEval = PredicateEvaluator<T.Left>(storage: self.storage)
+		let rightEval = PredicateEvaluator<T.Right>(storage: self.storage)
 		let leftObjs = leftEval.findAll(query.predicate.leftPredicate)
 		let rightObjs = rightEval.findAll(query.predicate.rightPredicate)
 		
-		var rows = [(T1, T2)]()
+		var rows = [T]()
 		for leftObj in leftObjs {
 			let matches = rightObjs.filter { rightObj in
 				query.predicate.joinExpressions.reduce(true, {$0 && $1.evaluate(leftObj, rightObj)})
 			}
-			rows.append(contentsOf: matches.map({(leftObj, $0)}))
+			rows.append(contentsOf: matches.map({
+				var r = T()
+				r[keyPath: T.left] = leftObj
+				r[keyPath: T.right] = $0
+				return r
+			}))
 		}
 		if let order = query.order {
 			rows.sort(by: order.lessThan)
 		}
-		var resultRows = [(T1, T2)]()
+		var resultRows = [T]()
 		for row in rows {
 			resultRows.append(row)
 			if resultRows.count == query.pageSize {

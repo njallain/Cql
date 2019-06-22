@@ -133,8 +133,11 @@ struct SubPredicate<Property: SqlComparable, Model: Codable> {
 
 	func sql(compiler: SqlCompiler) -> String {
 		let rightCompiler = compiler.childCompiler(for: Model.self)
+		guard let rightTable = rightCompiler.table else {
+			fatalError("table \(String(describing: Model.self)) not defined")
+		}
 		let predSql = rightCompiler.compile(predicate)
-		let subSelect = "select \(rightCompiler.name(for: selectProperty)) from \(rightCompiler.table.name) as \(rightCompiler.tableAlias) where \(predSql.whereClause)"
+		let subSelect = "select \(rightCompiler.name(for: selectProperty)) from \(rightTable.name) as \(rightCompiler.tableAlias) where \(predSql.whereClause)"
 		compiler.arguments.append(contentsOf: rightCompiler.arguments)
 		return subSelect
 	}

@@ -107,6 +107,12 @@ public class Database: Storage {
 	public func schema<T: Codable>(for tableType: T.Type) -> TableSchema<T> {
 		return self.tables[Database.tableName(of: tableType)] as! TableSchema<T>
 	}
+	func schemaIfDefined<T: Codable>(for tableType: T.Type) -> TableSchema<T>? {
+		guard let t = self.tables[Database.tableName(of: tableType)] else {
+			return nil
+		}
+		return t as? TableSchema<T>
+	}
 	
 	/**
 	Applies any migrations that are needed to update the existing schema to the current schema
@@ -211,7 +217,7 @@ public class SqlConnection: StorageConnection {
 	
 	public func update<T: Codable>(where predicate: Predicate<T>, set: (inout T) -> Void) throws {
 		let schema = database.schema(for: T.self)
-		let sqlBuilder = SqlPredicateCompiler<T>(database: database, useAlias: false)
+		let sqlBuilder = SqlPredicateCompiler<T>(database: database)
 		let clauses = sqlBuilder.compile(predicate)
 		let changes = try schema.sqlCoder.changes(for: schema.newRow, change: set)
 		let setSql = changes.keys.map({ "\($0) = {set\($0)}" }).joined(separator: ", ")
@@ -238,7 +244,7 @@ public class SqlConnection: StorageConnection {
 	}
 	public func delete<T: Codable>(_ predicate: Predicate<T>) throws {
 		let schema = database.schema(for: T.self)
-		let sqlBuilder = SqlPredicateCompiler<T>(database: database, useAlias: false)
+		let sqlBuilder = SqlPredicateCompiler<T>(database: database)
 		let clauses = sqlBuilder.compile(predicate)
 		let whereSql = clauses.whereClause.isEmpty ? "" : "where " + clauses.whereClause
 		let sql = "delete from \(schema.name) \(whereSql)"
@@ -260,17 +266,19 @@ public class SqlConnection: StorageConnection {
 		_ = results(rows)
 	}
 	
-	public func find<T1: Codable, T2: Codable>(query: JoinedQuery<T1, T2>, results: ([(T1,T2)]) -> Bool) throws {
-		let leftSchema = database.schema(for: T1.self)
-		let rightSchema = database.schema(for: T2.self)
-		let compiler = SqlPredicateCompiler<T1>(database: database)
-		let (sql, rightCompiler) = compiler.compile(query)
+	public func find<T: SqlJoin>(query: JoinedQuery<T>, results: ([T]) -> Bool) throws {
+		let leftSchema = database.schema(for: T.Left.self)
+		let rightSchema = database.schema(for: T.Right.self)
+		let compiler = SqlPredicateCompiler<T>(database: database)
+		let sql = compiler.compile(query)
 		let cur = try driver.query(sql: sql.fullSql, bind: sql.selectColumns, arguments:sql.arguments)
-		var rows = [(T1, T2)]()
+		var rows = [T]()
+		let leftName = T.leftName(database.schema(for: T.Left.self).newRow())
+		let rightName = T.rightName(database.schema(for: T.Right.self).newRow())
 		while let reader = try cur.next() {
-			let t1 = (try leftSchema.sqlCoder.decode(reader, compiler.tablePrefix))
-			let t2 = (try rightSchema.sqlCoder.decode(reader, rightCompiler.tablePrefix))
-			rows.append((t1,t2))
+			let t1 = (try leftSchema.sqlCoder.decode(reader, leftName + "."))
+			let t2 = (try rightSchema.sqlCoder.decode(reader, rightName + "."))
+			rows.append(T(left: t1, right: t2))
 			if rows.count == query.pageSize {
 				if results(rows) { rows.removeAll() }
 				else { return }

@@ -19,15 +19,18 @@ public struct Query<T: Codable> {
 	
 }
 
-public struct JoinedQuery<T: Codable, U: Codable> {
-	public init(predicate: JoinedPredicate<T,U>, pageSize: Int = Int.max, order: JoinedOrder<T,U>? = nil) {
-		self.predicate = predicate
+public struct JoinedQuery<T: SqlJoin> {
+	public init(_ type: T.Type, left: Predicate<T.Left>, right: Predicate<T.Right>, pageSize: Int = Int.max, order: Order<T>? = nil) {
+//		let joinExpr = AnyJoinExpression(JoinExpression(left: Model.primaryKey, right: relationship.keyPath))
+//		return JoinedPredicate(joinExpressions: [joinExpr], leftPredicate: self, rightPredicate: predicate)
+		let joinExpr = AnyJoinExpression(JoinExpression(left: type.relationship.left, right: type.relationship.right))
+		self.predicate = JoinedPredicate(joinExpressions: [joinExpr], leftPredicate: left, rightPredicate: right)
 		self.pageSize = pageSize
 		self.order = order
 	}
-	let predicate: JoinedPredicate<T,U>
+	let predicate: JoinedPredicate<T.Left,T.Right>
 	var pageSize: Int = Int.max
-	var order: JoinedOrder<T, U>? = nil
+	var order: Order<T>? = nil
 }
 
 
@@ -50,17 +53,9 @@ public extension StorageConnection {
 		}
 		return results ?? []
 	}
-	func find<T: Codable, U: Codable>(_ query: JoinedQuery<T,U>) throws -> [(T,U)] {
-		var results: [(T,U)]? = nil
+	func find<T: SqlJoin>(_ query: JoinedQuery<T>) throws -> [T] {
+		var results: [T]? = nil
 		try self.find(query: query) {
-			results = $0
-			return true
-		}
-		return results ?? []
-	}
-	func find<T1: Codable, T2: Codable>(_ predicate: JoinedPredicate<T1, T2>) throws -> [(T1,T2)] {
-		var results: [(T1, T2)]?
-		try self.find(query: JoinedQuery(predicate: predicate, pageSize: Int.max)) {
 			results = $0
 			return true
 		}

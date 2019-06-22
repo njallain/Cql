@@ -54,6 +54,14 @@ class SqlPropertyPathTests: XCTestCase {
 			XCTFail(error.localizedDescription)
 		}
 	}
+	
+	func testJoinPath() {
+		let n = SqlPropertyPath.path(Join(), keyPath: Join.left, value: Parent(), valueKeyPath: Join.relationship.left)
+		XCTAssertEqual(n, "myParent")
+		let ln = SqlPropertyPath.path(Join(), keyPath: Join.right, value: Child(details: "", parentId: UUID()),
+																	valueKeyPath: Join.relationship.right)
+		XCTAssertEqual(ln, "myChild")
+	}
 }
 
 fileprivate struct Args: Codable {
@@ -82,4 +90,14 @@ fileprivate struct Child: Codable {
 	var parentId: UUID
 	
 	static let parent = toOne(Parent.self, \Child.parentId)
+}
+
+fileprivate struct Join: SqlJoin {
+	typealias Left = Parent
+	typealias Right = Child
+	var myParent: Parent = Parent()
+	var myChild: Child = Child(details: "", parentId: UUID())
+	static let relationship = JoinProperty(left: \Parent.id, right: \Child.parentId)
+	static let left = \Join.myParent
+	static let right = \Join.myChild
 }

@@ -93,8 +93,10 @@ public protocol ForeignKeyRelation {
 }
 public struct RelationToOne<Source: Codable, Target: PrimaryKeyTable> {
 	let keyPath: WritableKeyPath<Source, Target.Key>
+	let join: JoinProperty<Source, Target, Target.Key>
 	init(_ target: Target.Type, _ keyPath: WritableKeyPath<Source, Target.Key>) {
 		self.keyPath = keyPath
+		self.join = JoinProperty(left: keyPath, right: Target.primaryKey)
 	}
 }
 extension RelationToOne: ForeignKeyRelation where Source: SqlTableRepresentable {
@@ -108,8 +110,10 @@ extension RelationToOne: ForeignKeyRelation where Source: SqlTableRepresentable 
 }
 public struct RelationToMany<Source: PrimaryKeyTable, Target: Codable> {
 	let keyPath: WritableKeyPath<Target, Source.Key>
+	let join: JoinProperty<Source, Target, Source.Key>
 	init(_ keyPath: WritableKeyPath<Target, Source.Key>, _ target: Target.Type) {
 		self.keyPath = keyPath
+		self.join = JoinProperty(left: Source.primaryKey, right: keyPath)
 	}
 }
 

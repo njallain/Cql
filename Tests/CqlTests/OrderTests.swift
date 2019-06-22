@@ -46,7 +46,7 @@ class OrderTests: SqiliteTestCase {
 			let compiler = SqlPredicateCompiler<AllTable>(database: database)
 			let order = Order(by: \AllTable.n).then(by: \AllTable.dt, descending: true)
 			let sql = order.sql(compiler: compiler)
-			XCTAssertEqual("order by t0.n asc, t0.dt desc", sql)
+			XCTAssertEqual("order by n asc, dt desc", sql)
 		} catch {
 			XCTFail(error.localizedDescription)
 		}

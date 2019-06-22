@@ -22,7 +22,7 @@ class SqlPredicateBuilderTests: SqiliteTestCase {
 				.property(\.id, .equal(5))
 			let sqlBuilder = SqlPredicateCompiler<PredTest>(database: db)
 			let sql = sqlBuilder.compile(pred)
-			XCTAssertEqual("t0.id = {t0arg0}", sql.whereClause)
+			XCTAssertEqual("id = {arg0}", sql.whereClause)
 		} catch {
 			XCTFail("\(error.localizedDescription)")
 		}
@@ -35,7 +35,7 @@ class SqlPredicateBuilderTests: SqiliteTestCase {
 				.property(\.nenum, .equal(.val1))
 			let sqlBuilder = SqlPredicateCompiler<PredTest>(database: db)
 			let sql = sqlBuilder.compile(pred)
-			XCTAssertEqual("t0.nenum = {t0arg0}", sql.whereClause)
+			XCTAssertEqual("nenum = {arg0}", sql.whereClause)
 			XCTAssertEqual(1, sqlBuilder.arguments.count)
 			XCTAssertEqual(SqlValue.int(IntEnum.val1.rawValue), sqlBuilder.arguments[0].value)
 		} catch {
@@ -52,7 +52,7 @@ class SqlPredicateBuilderTests: SqiliteTestCase {
 				.parent(Child.parent, pred)
 			let sqlBuilder = SqlPredicateCompiler<Child>(database: db)
 			let sql = sqlBuilder.compile(childPred)
-			XCTAssertEqual("t0.parentId in (select t1.id from PredTest as t1 where t1.nenum = {t1arg0})", sql.whereClause)
+			XCTAssertEqual("parentId in (select PredTest.id from PredTest as PredTest where PredTest.nenum = {argPredTest0})", sql.whereClause)
 			XCTAssertEqual(1, sqlBuilder.arguments.count)
 			XCTAssertEqual(SqlValue.int(IntEnum.val1.rawValue), sqlBuilder.arguments[0].value)
 		} catch {
@@ -69,7 +69,7 @@ class SqlPredicateBuilderTests: SqiliteTestCase {
 				.children(PredTest.children, childPred)
 			let sqlBuilder = SqlPredicateCompiler<PredTest>(database: db)
 			let sql = sqlBuilder.compile(pred)
-			XCTAssertEqual("t0.id in (select t1.parentId from Child as t1 where t1.description = {t1arg0})", sql.whereClause)
+			XCTAssertEqual("id in (select Child.parentId from Child as Child where Child.description = {argChild0})", sql.whereClause)
 			XCTAssertEqual(1, sqlBuilder.arguments.count)
 			XCTAssertEqual(SqlValue.text("test"), sqlBuilder.arguments[0].value)
 		} catch {
@@ -83,7 +83,7 @@ class SqlPredicateBuilderTests: SqiliteTestCase {
 			let query = Query(predicate: Where.all(PredTest.self), order: Order(by: \PredTest.name))
 			let compiler = SqlPredicateCompiler<PredTest>(database: db)
 			let sql = compiler.compile(query)
-			XCTAssertEqual("order by t0.name asc", sql.orderClause)
+			XCTAssertEqual("order by name asc", sql.orderClause)
 		} catch {
 			XCTFail("\(error.localizedDescription)")
 		}

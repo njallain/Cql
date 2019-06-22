@@ -46,6 +46,7 @@ public protocol StorageConnection {
 	false to stop the query.
 	*/
 	func find<T: Codable>(query: Query<T>, results: ([T]) -> Bool) throws
+	
 	/**
 	Finds pagedBy results at a time.
 	This is not asynchronous, it will only return when all results are processed or
@@ -53,7 +54,7 @@ public protocol StorageConnection {
 	The results function will be called however many times needed to return all results, or until it returns
 	false to stop the query.
 	*/
-	func find<T1: Codable, T2: Codable>(query: JoinedQuery<T1, T2>, results: ([(T1,T2)]) -> Bool) throws
+	func find<T: SqlJoin>(query: JoinedQuery<T>, results: ([T]) -> Bool) throws
 	
 	func get<T: PrimaryKeyTable>(_ type: T.Type, _ id: T.Key) throws -> T?
 	func get<T: PrimaryKeyTable2>(_ type: T.Type, _ id1: T.Key1, _ id2: T.Key2) throws -> T?
