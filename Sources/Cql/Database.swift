@@ -263,7 +263,9 @@ public class SqlConnection: StorageConnection {
 				else { return }
 			}
 		}
-		_ = results(rows)
+		if rows.count > 0 {
+			_ = results(rows)
+		}
 	}
 	
 	public func find<T: SqlJoin>(query: JoinedQuery<T>, results: ([T]) -> Bool) throws {
@@ -284,7 +286,9 @@ public class SqlConnection: StorageConnection {
 				else { return }
 			}
 		}
-		_ = results(rows)
+		if rows.count > 0 {
+			_ = results(rows)
+		}
 	}
 	
 	public func nextId<T>(_ type: T.Type) throws -> Int where T : PrimaryKeyTable, T.Key == Int {

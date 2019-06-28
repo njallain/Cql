@@ -7,7 +7,9 @@
 
 import Foundation
 
-
+/**
+Implement this to define a joined query. 
+*/
 public protocol SqlJoin: Codable, Initable {
 	associatedtype Left: Codable
 	associatedtype Right: Codable
