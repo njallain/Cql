@@ -161,6 +161,38 @@ class DatabaseTests: SqiliteTestCase {
 			XCTFail(error.localizedDescription)
 		}
 	}
+	func testFindPaged() {
+		do {
+			let db = try openTestDatabase()
+			let conn = try db.open()
+			let o = KeyedFoo(id: 7, name: "my name", description: "desc", senum: .val2, nenum: .val2)
+			let o2 = KeyedFoo(id: 8, name: "foo2", description: "desc", senum: .val1, nenum: nil)
+			let txn = try conn.beginTransaction()
+			try conn.insert([o, o2])
+			try txn.commit()
+			try verifyPages(conn, [o,o2], pageSize: Int.max, expectedCalls: 1)
+			try verifyPages(conn, [o,o2], pageSize: 2, expectedCalls: 1)
+			try verifyPages(conn, [o,o2], pageSize: 1, expectedCalls: 2)
+		} catch {
+			XCTFail(error.localizedDescription)
+		}
+	}
+	private func verifyPages(_ conn: StorageConnection, _ expected: [KeyedFoo], pageSize: Int, expectedCalls: Int) throws {
+		var result = [KeyedFoo]()
+		var numCalls = 0
+		let pred = Predicate.all(KeyedFoo.self)
+		let order = Order(by: \KeyedFoo.id)
+		try conn.find(query: Query(predicate: pred, pageSize: pageSize, order: order)) {
+			numCalls += 1
+			result = result + $0
+			return true
+		}
+		XCTAssertEqual(expectedCalls, numCalls)
+		XCTAssertEqual(expected.count, result.count)
+		for (e,r) in zip(expected, result) {
+			verify(e, r)
+		}
+	}
 	func testFindJoinedObjects() {
 		do {
 			let db = try openTestDatabase()
