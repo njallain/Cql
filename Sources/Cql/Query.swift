@@ -13,9 +13,9 @@ public struct Query<T: Codable> {
 		self.pageSize = pageSize
 		self.order = order
 	}
-	let predicate: Predicate<T>
-	var pageSize: Int = Int.max
-	var order: Order<T>? = nil
+	public let predicate: Predicate<T>
+	public let pageSize: Int
+	public let order: Order<T>?
 	
 }
 
@@ -29,8 +29,8 @@ public struct JoinedQuery<T: SqlJoin> {
 		self.order = order
 	}
 	let predicate: JoinedPredicate<T.Left,T.Right>
-	var pageSize: Int = Int.max
-	var order: Order<T>? = nil
+	public let pageSize: Int
+	public let order: Order<T>?
 }
 
 
