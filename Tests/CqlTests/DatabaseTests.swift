@@ -17,7 +17,8 @@ class DatabaseTests: SqiliteTestCase {
 				.codable({SqliteTestObj()}),
 				.codable({Foo()}),
 				.table(FooChild.self),
-				.table(KeyedFoo.self)
+				.table(KeyedFoo.self),
+				.table(DoubleKeyed.self),
 			])
 	}
 	
@@ -95,7 +96,40 @@ class DatabaseTests: SqiliteTestCase {
 			XCTFail(error.localizedDescription)
 		}
 	}
-	
+	func testUpdateDoubleKey() {
+		do {
+			let db = try openTestDatabase()
+			let conn = try db.open()
+			var o = DoubleKeyed(leftId: 1, rightId: 2, name: "test")
+			try conn.insert(o)
+			o.name = "change"
+			try conn.update(o)
+			guard let row = try conn.get(DoubleKeyed.self, 1, 2) else {
+				XCTFail("couldn't find row")
+				return
+			}
+			verify(o, row)
+		} catch {
+			XCTFail(error.localizedDescription)
+		}
+	}
+
+	func testDeleteDoubleKey() {
+		do {
+			let db = try openTestDatabase()
+			let conn = try db.open()
+			let o = DoubleKeyed(leftId: 3, rightId: 4, name: "test")
+			try conn.insert(o)
+			try conn.delete(o)
+			if let _ = try conn.get(DoubleKeyed.self, 3, 4) {
+				XCTFail("row not deleted")
+				return
+			}
+		} catch {
+			XCTFail(error.localizedDescription)
+		}
+	}
+
 	func testFindChildObjects() {
 		do {
 			let db = try openTestDatabase()
@@ -299,7 +333,11 @@ class DatabaseTests: SqiliteTestCase {
 		}
 		XCTAssertEqual(row.fooId, v.fooId)
 	}
-
+	private func verify(_ row: DoubleKeyed, _ value: DoubleKeyed) {
+		XCTAssertEqual(row.leftId, value.leftId)
+		XCTAssertEqual(row.rightId, value.rightId)
+		XCTAssertEqual(row.name, value.name)
+	}
 	private func verify(_ row: KeyedFoo, _ value: KeyedFoo) {
 		XCTAssertEqual(row.id, value.id)
 		XCTAssertEqual(row.name, value.name)
@@ -324,6 +362,13 @@ fileprivate struct KeyedFoo: PrimaryKeyTable, Codable {
 	
 	static let primaryKey = \KeyedFoo.id
 	static let children = toMany(\FooChild.fooId)
+}
+
+fileprivate struct DoubleKeyed: PrimaryKeyTable2 {
+	var leftId: Int = 0
+	var rightId: Int = 0
+	var name = ""
+	static let primaryKey = (\DoubleKeyed.leftId, \DoubleKeyed.rightId)
 }
 
 fileprivate struct FooChild: SqlTableRepresentable {

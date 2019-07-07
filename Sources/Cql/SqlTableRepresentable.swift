@@ -40,6 +40,13 @@ public protocol PrimaryKeyTable2: SqlTableRepresentable {
 	static var primaryKey: (WritableKeyPath<Self, Key1>, WritableKeyPath<Self, Key2>) {get}
 }
 
+public struct JoinKey<L: SqlComparable, R: SqlComparable>: Hashable {
+	public var leftKey: L
+	public var rightKey: R
+}
+public extension PrimaryKeyTable2 {
+	var primaryKeys: JoinKey<Key1, Key2> { JoinKey(leftKey: self[keyPath: Self.primaryKey.0], rightKey: self[keyPath: Self.primaryKey.1]) }
+}
 public extension SqlTableRepresentable {
 	static var sqlCoder: SqlCoder<Self> { SqlCoder<Self>() }
 }

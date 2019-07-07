@@ -228,7 +228,16 @@ public class SqlConnection: StorageConnection {
 		try driver.execute(sql: sql, arguments: args)
 	}
 	public func update<T: PrimaryKeyTable>(_ rows: [T]) throws {
+		try update(keyedRows: rows)
+	}
+	public func update<T: PrimaryKeyTable2>(_ rows: [T]) throws {
+		try update(keyedRows: rows)
+	}
+	private func update<T: Codable>(keyedRows rows: [T]) throws {
 		let schema = database.schema(for: T.self)
+		guard schema.primaryKey.count > 0 else {
+			fatalError("update can only be called on a keyed table")
+		}
 		var sql = ""
 		for row in rows {
 			let values = try schema.sqlCoder.arguments(for: row)

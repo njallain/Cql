@@ -93,6 +93,19 @@ public class MemoryConnection: StorageConnection {
 		}
 		storage.set(rows: newRows)
 	}
+	public func update<T: PrimaryKeyTable2>(_ rows: [T]) throws {
+		let updatesById = Dictionary(grouping: rows, by: {$0.primaryKeys})
+		let rows = storage.rows(T.self)
+		var newRows = [T]()
+		for row in rows {
+			if let updated = updatesById[row.primaryKeys]?.first {
+				newRows.append(updated)
+			} else {
+				newRows.append(row)
+			}
+		}
+		storage.set(rows: newRows)
+	}
 
 	public func delete<T: Codable>(_ predicate: Predicate<T>) throws {
 		let eval = PredicateEvaluator<T>(storage: self.storage)
