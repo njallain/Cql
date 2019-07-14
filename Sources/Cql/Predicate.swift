@@ -9,19 +9,6 @@
 import Foundation
 
 /**
-Starting point for building a predicate.
-This is just a bit of syntatic sugar for beginning building a predicate
-*/
-public enum Where {
-	public static func any<Model: Codable>(_ type: Model.Type) -> Predicate<Model> {
-		return Predicate<Model>(.any)
-	}
-	public static func all<Model: Codable>(_ type: Model.Type) -> Predicate<Model> {
-		return Predicate<Model>(.all)
-	}
-}
-
-/**
 A single part of a predicate that can be composed with other predicate parts to make a complete predicates
 */
 protocol PredicatePart {

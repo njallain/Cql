@@ -18,7 +18,7 @@ class SqlPredicateBuilderTests: SqiliteTestCase {
 	func testSqlPredicate() {
 		do {
 			let db = try openTestDatabase()
-			let pred = Where.all(PredTest.self)
+			let pred = Predicate.all(PredTest.self)
 				.property(\.id, .equal(5))
 			let sqlBuilder = SqlPredicateCompiler<PredTest>(database: db)
 			let sql = sqlBuilder.compile(pred)
@@ -43,7 +43,7 @@ class SqlPredicateBuilderTests: SqiliteTestCase {
 	func testIntEnumPredicate() {
 		do {
 			let db = try openTestDatabase()
-			let pred = Where.all(PredTest.self)
+			let pred = Predicate.all(PredTest.self)
 				.property(\.nenum, .equal(.val1))
 			let sqlBuilder = SqlPredicateCompiler<PredTest>(database: db)
 			let sql = sqlBuilder.compile(pred)
@@ -58,9 +58,9 @@ class SqlPredicateBuilderTests: SqiliteTestCase {
 	func testParentSubPredicate() {
 		do {
 			let db = try openTestDatabase()
-			let pred = Where.all(PredTest.self)
+			let pred = Predicate.all(PredTest.self)
 				.property(\.nenum, .equal(.val1))
-			let childPred = Where.all(Child.self)
+			let childPred = Predicate.all(Child.self)
 				.parent(Child.parent, pred)
 			let sqlBuilder = SqlPredicateCompiler<Child>(database: db)
 			let sql = sqlBuilder.compile(childPred)
@@ -75,9 +75,9 @@ class SqlPredicateBuilderTests: SqiliteTestCase {
 	func testChildSubPredicate() {
 		do {
 			let db = try openTestDatabase()
-			let childPred = Where.all(Child.self)
+			let childPred = Predicate.all(Child.self)
 				.property(\.description, .equal("test"))
-			let pred = Where.all(PredTest.self)
+			let pred = Predicate.all(PredTest.self)
 				.children(PredTest.children, childPred)
 			let sqlBuilder = SqlPredicateCompiler<PredTest>(database: db)
 			let sql = sqlBuilder.compile(pred)
@@ -92,7 +92,7 @@ class SqlPredicateBuilderTests: SqiliteTestCase {
 	func testOrderedQuery() {
 		do {
 			let db = try openTestDatabase()
-			let query = Query(predicate: Where.all(PredTest.self), order: Order(by: \PredTest.name))
+			let query = Query(predicate: Predicate.all(PredTest.self), order: Order(by: \PredTest.name))
 			let compiler = SqlPredicateCompiler<PredTest>(database: db)
 			let sql = compiler.compile(query)
 			XCTAssertEqual("order by name asc", sql.orderClause)

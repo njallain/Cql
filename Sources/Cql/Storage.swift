@@ -76,7 +76,7 @@ public extension StorageConnection {
 		try update([row])
 	}
 	func get<T: PrimaryKeyTable>(_ type: T.Type, _ id: T.Key) throws -> T? {
-		let predicate = Where.all(type).property(T.primaryKey, .equal(id))
+		let predicate = Predicate.all(type).property(T.primaryKey, .equal(id))
 		let vs = try self.find(predicate)
 		return vs.first
 	}

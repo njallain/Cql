@@ -29,7 +29,7 @@ class DatabaseTests: SqiliteTestCase {
 			let conn = try db.open()
 			let row = Foo(id: 5, name: "test", description: "cde")
 			try conn.insert(row)
-			let results = try conn.find(Where.all(Foo.self).property(\.id, .equal(5)))
+			let results = try conn.find(Predicate.all(Foo.self).property(\.id, .equal(5)))
 			XCTAssertEqual(1, results.count)
 			verify(row, results)
 		} catch {
@@ -46,7 +46,7 @@ class DatabaseTests: SqiliteTestCase {
 				Foo(id: 6, name: "test2", description: nil)
 			]
 			try conn.insert(rows)
-			let results = try conn.find(Where.all(Foo.self))
+			let results = try conn.find(Predicate.all(Foo.self))
 			XCTAssertEqual(2, results.count)
 			verify(rows[0], results)
 			verify(rows[1], results)
@@ -63,12 +63,12 @@ class DatabaseTests: SqiliteTestCase {
 			let row = Foo(id: 5, name: "test", description: "abc")
 			let updatedRow = Foo(id: 6, name: "test2", description: nil)
 			try conn.insert(row)
-			try conn.update(where: Where.all(Foo.self).property(\.id, .equal(5))) {
+			try conn.update(where: Predicate.all(Foo.self).property(\.id, .equal(5))) {
 				$0.id = updatedRow.id
 				$0.name = updatedRow.name
 				$0.description = updatedRow.description
 			}
-			let results = try conn.find(Where.all(Foo.self))
+			let results = try conn.find(Predicate.all(Foo.self))
 			XCTAssertEqual(1, results.count)
 			verify(updatedRow, results)
 		} catch {
@@ -182,7 +182,7 @@ class DatabaseTests: SqiliteTestCase {
 			let txn = try conn.beginTransaction()
 			try conn.insert([o, o2])
 			try txn.commit()
-			let pred = Where.all(KeyedFoo.self)
+			let pred = Predicate.all(KeyedFoo.self)
 			var results = try conn.find(Query(predicate: pred, order: Order(by: \KeyedFoo.name)))
 			XCTAssertEqual(2, results.count)
 			verify(o2, results[0])
@@ -266,7 +266,7 @@ class DatabaseTests: SqiliteTestCase {
 			try conn.insert([o, o2])
 			try conn.insert([child1, child3])
 			try txn.commit()
-			let leftPred = Where.all(KeyedFoo.self)
+			let leftPred = Predicate.all(KeyedFoo.self)
 			let rightPred = Predicate.all(FooChild.self)
 			let order = Order(by: \KeyedFoo.name, through: \ParentChild.parent)
 			let query = JoinedQuery(ParentChild.self, left: leftPred, right: rightPred, order: order)
@@ -288,7 +288,7 @@ class DatabaseTests: SqiliteTestCase {
 			XCTAssertEqual(1, o.id)
 			XCTAssertEqual(2, o2.id)
 			try conn.insert([o, o2])
-			let results = try conn.find(Where.all(KeyedFoo.self).property(\.id, .any([o.id, o2.id])))
+			let results = try conn.find(Predicate.all(KeyedFoo.self).property(\.id, .any([o.id, o2.id])))
 			XCTAssertEqual(2, results.count)
 			verify(o, results.first(where: {$0.id == o.id})!)
 			verify(o2, results.first(where: {$0.id == o2.id})!)
@@ -309,7 +309,7 @@ class DatabaseTests: SqiliteTestCase {
 			XCTAssertEqual(2, o.id)
 			XCTAssertEqual(3, o2.id)
 			try conn.insert([o, o2])
-			let results = try conn.find(Where.all(KeyedFoo.self).property(\.id, .any([o.id, o2.id])))
+			let results = try conn.find(Predicate.all(KeyedFoo.self).property(\.id, .any([o.id, o2.id])))
 			XCTAssertEqual(2, results.count)
 			verify(o, results.first(where: {$0.id == o.id})!)
 			verify(o2, results.first(where: {$0.id == o2.id})!)
