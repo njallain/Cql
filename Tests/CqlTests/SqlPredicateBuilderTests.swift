@@ -14,7 +14,7 @@ class SqlPredicateBuilderTests: SqiliteTestCase {
 	private func openTestDatabase() throws -> Database {
 		return try openDatabase([.table(PredTest.self), .table(Child.self)])
 	}
-	
+
 	func testSqlPredicate() {
 		do {
 			let db = try openTestDatabase()
@@ -23,6 +23,18 @@ class SqlPredicateBuilderTests: SqiliteTestCase {
 			let sqlBuilder = SqlPredicateCompiler<PredTest>(database: db)
 			let sql = sqlBuilder.compile(pred)
 			XCTAssertEqual("id = {arg0}", sql.whereClause)
+		} catch {
+			XCTFail("\(error.localizedDescription)")
+		}
+	}
+
+	func testSqlPredicateOp() {
+		do {
+			let db = try openTestDatabase()
+			let pred = (\PredTest.id %== 5) %&& (\PredTest.id %== 6)
+			let sqlBuilder = SqlPredicateCompiler<PredTest>(database: db)
+			let sql = pred.sql(compiler: sqlBuilder)
+			XCTAssertEqual("(id = {arg0}) and (id = {arg1})", sql)
 		} catch {
 			XCTFail("\(error.localizedDescription)")
 		}

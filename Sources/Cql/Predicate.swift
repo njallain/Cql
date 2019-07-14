@@ -47,6 +47,7 @@ enum PredicateComposition {
 	}
 }
 
+
 /**
 A type-erased predicate part so in can be contained in a collection
 */
@@ -105,13 +106,39 @@ public enum PredicateValueOperator<V: SqlComparable> {
 	}
 }
 
+struct ComposePredicate<Model: Codable>: PredicatePart {
+	private let left: AnyPredicatePart<Model>
+	private let right: AnyPredicatePart<Model>
+	private let op: PredicateComposition
+	init(_ op: PredicateComposition, _ left: AnyPredicatePart<Model>, _ right: AnyPredicatePart<Model>) {
+		self.op = op
+		self.left = left
+		self.right = right
+	}
+	func evaluate(evaluator: PredicateEvaluator<Model>, _ model: Model) -> Bool {
+		let l = left.evaluate(evaluator: evaluator, model)
+		let r = right.evaluate(evaluator: evaluator, model)
+		switch op {
+		case .all:
+			return l && r
+		case .any:
+			return l || r
+		}
+	}
+	func sql(compiler: SqlPredicateCompiler<Model>) -> String {
+		let l = left.sql(compiler: compiler)
+		let r = right.sql(compiler: compiler)
+		return "(\(l)) \(op.sql) (\(r))"
+	}
+
+}
 /**
 A component of a predicate comparing a key path to another value
 */
 struct ComparePropertyValue<Model: Codable, V: SqlComparable>: PredicatePart {
 	private let path: WritableKeyPath<Model,V>
 	private let valueOperator: PredicateValueOperator<V>
-	fileprivate init(_ path: WritableKeyPath<Model, V>, _ val: PredicateValueOperator<V>) {
+	init(_ path: WritableKeyPath<Model, V>, _ val: PredicateValueOperator<V>) {
 		self.path = path
 		self.valueOperator = val
 	}
@@ -184,7 +211,7 @@ public final class Predicate<Model: Codable> {
 		let subPred = AnySubPredicate(SubPredicate(selectProperty: relationship.keyPath, predicate: predicate))
 		return self.append(ComparePropertyValue(Model.primaryKey, .anyPredicate(subPred)))
 	}
-	private func append<Part: PredicatePart>(_ part: Part) -> Predicate<Model> where Part.Model == Model {
+	func append<Part: PredicatePart>(_ part: Part) -> Predicate<Model> where Part.Model == Model {
 		self.parts.append(AnyPredicatePart(part))
 		return self
 	}
