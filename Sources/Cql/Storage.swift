@@ -76,25 +76,21 @@ public extension StorageConnection {
 		try update([row])
 	}
 	func get<T: PrimaryKeyTable>(_ type: T.Type, _ id: T.Key) throws -> T? {
-		let predicate = Predicate.all(type).property(T.primaryKey, .equal(id))
+		let predicate = T.primaryKey %== id
 		let vs = try self.find(predicate)
 		return vs.first
 	}
 	func get<T: PrimaryKeyTable2>(_ type: T.Type, _ id1: T.Key1, _ id2: T.Key2) throws -> T? {
-		let predicate = Predicate.all(type)
-			.property(T.primaryKey.0, .equal(id1))
-			.property(T.primaryKey.1, .equal(id2))
+		let predicate = (T.primaryKey.0 %== id1) %&& (T.primaryKey.1 %== id2)
 		let vs = try self.find(predicate)
 		return vs.first
 	}
 	func delete<T: PrimaryKeyTable>(_ row: T) throws {
-		let predicate = Predicate.all(T.self).property(T.primaryKey, .equal(row[keyPath: T.primaryKey]))
+		let predicate = T.primaryKey %== row[keyPath: T.primaryKey]
 		try delete(predicate)
 	}
 	func delete<T: PrimaryKeyTable2>(_ row: T) throws {
-		let predicate = Predicate.all(T.self)
-			.property(T.primaryKey.0, .equal(row[keyPath: T.primaryKey.0]))
-			.property(T.primaryKey.1, .equal(row[keyPath: T.primaryKey.1]))
+		let predicate = (T.primaryKey.0 %== row[keyPath: T.primaryKey.0]) %&& (T.primaryKey.1 %== row[keyPath: T.primaryKey.1])
 		try delete(predicate)
 	}
 }

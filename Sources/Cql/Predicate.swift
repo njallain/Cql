@@ -36,14 +36,11 @@ enum PredicateComposition {
 
 
 /**
-A type-erased predicate part so in can be contained in a collection
+A type-erased predicate
 */
-struct AnyPredicatePart<Model: Codable>: PredicatePart {
+public struct Predicate<Model: Codable>: PredicatePart {
 	private let eval: (PredicateEvaluator<Model>, Model) -> Bool
 	private let sqlFn: (SqlPredicateCompiler<Model>) -> String
-//	static func all(_ type: Model.Type) -> Self {
-//		return PredicatePart
-//	}
 	init<T: PredicatePart>(_ part: T) where T.Model == Model {
 		eval = part.evaluate
 		sqlFn = part.sql
@@ -59,7 +56,7 @@ struct AnyPredicatePart<Model: Codable>: PredicatePart {
 /**
 An operator and value for predicate conditions
 */
-public enum PredicateValueOperator<V: SqlComparable> {
+enum PredicateValueOperator<V: SqlComparable> {
 	case equal(V)
 	case lessThan(V)
 	case lessThanOrEqual(V)
@@ -96,6 +93,9 @@ public enum PredicateValueOperator<V: SqlComparable> {
 	}
 }
 
+/**
+A predicate that always evaluates as true
+*/
 struct TruePredicatePart<Model: Codable>: PredicatePart {
 	init() {
 	}
@@ -105,11 +105,14 @@ struct TruePredicatePart<Model: Codable>: PredicatePart {
 	}
 }
 
+/**
+A logical 'and' or 'or' of 2 predicates
+*/
 struct ComposePredicate<Model: Codable>: PredicatePart {
-	private let left: AnyPredicatePart<Model>
-	private let right: AnyPredicatePart<Model>
+	private let left: Predicate<Model>
+	private let right: Predicate<Model>
 	private let op: PredicateComposition
-	init(_ op: PredicateComposition, _ left: AnyPredicatePart<Model>, _ right: AnyPredicatePart<Model>) {
+	init(_ op: PredicateComposition, _ left: Predicate<Model>, _ right: Predicate<Model>) {
 		self.op = op
 		self.left = left
 		self.right = right
@@ -184,54 +187,6 @@ public struct AnySubPredicate<Property: SqlComparable> {
 	}
 	let sql: (SqlCompiler) -> String
 	let evaluate: (PredicateEvaluatorProtocol, Property) -> Bool
-}
-
-public final class Predicate<Model: Codable> {
-	public static func any(_ model: Model.Type) -> Self {
-		return Self(PredicateComposition.any)
-	}
-	public static func all(_ model: Model.Type) -> Self {
-		return Self(PredicateComposition.all)
-	}
-	private let composition: PredicateComposition
-	private var parts: [AnyPredicatePart<Model>] = []
-	//private var joins: [AnyPredicateJoin<Model>] = []
-	
-	init(_ part: AnyPredicatePart<Model>) {
-		self.composition = .all
-		_ = self.append(part)
-	}
-	init(_ composition: PredicateComposition) {
-		self.composition = composition
-	}
-	public func property<V: SqlComparable>(_ path: WritableKeyPath<Model, V>, _ valueOperator: PredicateValueOperator<V>) -> Predicate<Model> {
-		return self.append(ComparePropertyValue(path, valueOperator))
-	}
-	public func parent<ParentModel: Codable>(_ relationship: RelationToOne<Model, ParentModel>, _ predicate: Predicate<ParentModel>) -> Predicate<Model> {
-		let subPred = AnySubPredicate(SubPredicate(selectProperty: ParentModel.primaryKey, predicate: predicate))
-		return self.append(ComparePropertyValue(relationship.keyPath, .anyPredicate(subPred)))
-	}
-	public func children<ChildModel: Codable>(_ relationship: RelationToMany<Model, ChildModel>, _ predicate: Predicate<ChildModel>) -> Predicate<Model> {
-		let subPred = AnySubPredicate(SubPredicate(selectProperty: relationship.keyPath, predicate: predicate))
-		return self.append(ComparePropertyValue(Model.primaryKey, .anyPredicate(subPred)))
-	}
-	func append<Part: PredicatePart>(_ part: Part) -> Predicate<Model> where Part.Model == Model {
-		self.parts.append(AnyPredicatePart(part))
-		return self
-	}
-	func sql(compiler: SqlPredicateCompiler<Model>) -> String {
-		let predSqls = parts.map { $0.sql(compiler: compiler) }
-		let finalPred = predSqls.sqlJoined(separator: " \(composition.sql) ", { "(\($0))" })
-		return finalPred
-	}
-	public func evaluate(evaluator: PredicateEvaluator<Model>, _ model: Model) -> Bool {
-		switch composition {
-		case .all:
-			return parts.reduce(true) { $0 && $1.evaluate(evaluator: evaluator, model) }
-		case .any:
-			return parts.reduce(false) { $0 || $1.evaluate(evaluator: evaluator, model) }
-		}
-	}
 }
 
 public func <(_ lhs: UUID, _ rhs: UUID) -> Bool {

@@ -18,8 +18,7 @@ class SqlPredicateBuilderTests: SqiliteTestCase {
 	func testSqlPredicate() {
 		do {
 			let db = try openTestDatabase()
-			let pred = Predicate.all(PredTest.self)
-				.property(\.id, .equal(5))
+			let pred = \PredTest.id %== 5
 			let sqlBuilder = SqlPredicateCompiler<PredTest>(database: db)
 			let sql = sqlBuilder.compile(pred)
 			XCTAssertEqual("id = {arg0}", sql.whereClause)
@@ -43,8 +42,7 @@ class SqlPredicateBuilderTests: SqiliteTestCase {
 	func testIntEnumPredicate() {
 		do {
 			let db = try openTestDatabase()
-			let pred = Predicate.all(PredTest.self)
-				.property(\.nenum, .equal(.val1))
+			let pred = \PredTest.nenum %== .val1
 			let sqlBuilder = SqlPredicateCompiler<PredTest>(database: db)
 			let sql = sqlBuilder.compile(pred)
 			XCTAssertEqual("nenum = {arg0}", sql.whereClause)
@@ -58,10 +56,8 @@ class SqlPredicateBuilderTests: SqiliteTestCase {
 	func testParentSubPredicate() {
 		do {
 			let db = try openTestDatabase()
-			let pred = Predicate.all(PredTest.self)
-				.property(\.nenum, .equal(.val1))
-			let childPred = Predicate.all(Child.self)
-				.parent(Child.parent, pred)
+			let pred = \PredTest.nenum %== .val1
+			let childPred = Child.parent.in(pred)
 			let sqlBuilder = SqlPredicateCompiler<Child>(database: db)
 			let sql = sqlBuilder.compile(childPred)
 			XCTAssertEqual("parentId in (select PredTest.id from PredTest as PredTest where PredTest.nenum = {argPredTest0})", sql.whereClause)
@@ -75,10 +71,8 @@ class SqlPredicateBuilderTests: SqiliteTestCase {
 	func testChildSubPredicate() {
 		do {
 			let db = try openTestDatabase()
-			let childPred = Predicate.all(Child.self)
-				.property(\.description, .equal("test"))
-			let pred = Predicate.all(PredTest.self)
-				.children(PredTest.children, childPred)
+			let childPred = \Child.description %== "test"
+			let pred = PredTest.children.in(childPred)
 			let sqlBuilder = SqlPredicateCompiler<PredTest>(database: db)
 			let sql = sqlBuilder.compile(pred)
 			XCTAssertEqual("id in (select Child.parentId from Child as Child where Child.description = {argChild0})", sql.whereClause)

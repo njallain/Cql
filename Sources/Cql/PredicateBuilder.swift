@@ -18,53 +18,53 @@ infix operator %*: ComparisonPrecedence	// sql 'in'
 
 
 extension WritableKeyPath where Root: Codable, Value: SqlComparable {
-	static func %== (left: WritableKeyPath<Root, Value>, right: Value) -> AnyPredicatePart<Root> {
-		return AnyPredicatePart(ComparePropertyValue(left, .equal(right)))
+	static func %== (left: WritableKeyPath<Root, Value>, right: Value) -> Predicate<Root> {
+		return Predicate(ComparePropertyValue(left, .equal(right)))
 	}
-	static func %>= (left: WritableKeyPath<Root, Value>, right: Value) -> AnyPredicatePart<Root> {
-		return AnyPredicatePart(ComparePropertyValue(left, .greaterThanOrEqual(right)))
+	static func %>= (left: WritableKeyPath<Root, Value>, right: Value) -> Predicate<Root> {
+		return Predicate(ComparePropertyValue(left, .greaterThanOrEqual(right)))
 	}
-	static func %> (left: WritableKeyPath<Root, Value>, right: Value) -> AnyPredicatePart<Root> {
-		return AnyPredicatePart(ComparePropertyValue(left, .greaterThan(right)))
+	static func %> (left: WritableKeyPath<Root, Value>, right: Value) -> Predicate<Root> {
+		return Predicate(ComparePropertyValue(left, .greaterThan(right)))
 	}
-	static func %<= (left: WritableKeyPath<Root, Value>, right: Value) -> AnyPredicatePart<Root> {
-		return AnyPredicatePart(ComparePropertyValue(left, .lessThanOrEqual(right)))
+	static func %<= (left: WritableKeyPath<Root, Value>, right: Value) -> Predicate<Root> {
+		return Predicate(ComparePropertyValue(left, .lessThanOrEqual(right)))
 	}
-	static func %< (left: WritableKeyPath<Root, Value>, right: Value) -> AnyPredicatePart<Root> {
-		return AnyPredicatePart(ComparePropertyValue(left, .lessThan(right)))
+	static func %< (left: WritableKeyPath<Root, Value>, right: Value) -> Predicate<Root> {
+		return Predicate(ComparePropertyValue(left, .lessThan(right)))
 	}
-	static func %* (left: WritableKeyPath<Root, Value>, right: [Value]) -> AnyPredicatePart<Root> {
-		return AnyPredicatePart(ComparePropertyValue(left, .anyValue(right)))
+	static func %* (left: WritableKeyPath<Root, Value>, right: [Value]) -> Predicate<Root> {
+		return Predicate(ComparePropertyValue(left, .anyValue(right)))
 	}
 }
 
-extension AnyPredicatePart {
-	static func %&& (left: AnyPredicatePart<Model>, right: AnyPredicatePart<Model>) -> AnyPredicatePart<Model> {
-		return AnyPredicatePart(ComposePredicate(.all, left, right))
+extension Predicate {
+	static func %&& (left: Predicate<Model>, right: Predicate<Model>) -> Predicate<Model> {
+		return Predicate(ComposePredicate(.all, left, right))
 	}
-	static func %|| (left: AnyPredicatePart<Model>, right: AnyPredicatePart<Model>) -> AnyPredicatePart<Model> {
-		return AnyPredicatePart(ComposePredicate(.any, left, right))
+	static func %|| (left: Predicate<Model>, right: Predicate<Model>) -> Predicate<Model> {
+		return Predicate(ComposePredicate(.any, left, right))
 	}
 	static func all(_ type: Model.Type) -> Self {
-		return AnyPredicatePart(TruePredicatePart<Model>())
+		return Predicate(TruePredicatePart<Model>())
 	}
 }
 
 extension RelationToMany {
-	func `in`(_ predicate: AnyPredicatePart<Target>) -> AnyPredicatePart<Source> {
-		let oldPredicate = Predicate.all(Target.self).append(predicate)
-		let subPred = AnySubPredicate(SubPredicate(selectProperty: self.keyPath, predicate: oldPredicate))
+	func `in`(_ predicate: Predicate<Target>) -> Predicate<Source> {
+		//let oldPredicate = Predicate.all(Target.self).append(predicate)
+		let subPred = AnySubPredicate(SubPredicate(selectProperty: self.keyPath, predicate: predicate))
 		let inPred = ComparePropertyValue(Source.primaryKey, .anyPredicate(subPred))
-		return AnyPredicatePart(inPred)
+		return Predicate(inPred)
 	}
 }
 
 extension RelationToOne {
-	func `in`(_ predicate: AnyPredicatePart<Target>) -> AnyPredicatePart<Source> {
-		let oldPredicate = Predicate.all(Target.self).append(predicate)
-		let subPred = AnySubPredicate(SubPredicate(selectProperty: Target.primaryKey, predicate: oldPredicate))
+	func `in`(_ predicate: Predicate<Target>) -> Predicate<Source> {
+		//let oldPredicate = Predicate.all(Target.self).append(predicate)
+		let subPred = AnySubPredicate(SubPredicate(selectProperty: Target.primaryKey, predicate: predicate))
 		let inPred = ComparePropertyValue(self.keyPath, .anyPredicate(subPred))
-		return AnyPredicatePart(inPred)
+		return Predicate(inPred)
 	}
 
 }
