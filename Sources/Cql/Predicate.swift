@@ -41,6 +41,9 @@ A type-erased predicate part so in can be contained in a collection
 struct AnyPredicatePart<Model: Codable>: PredicatePart {
 	private let eval: (PredicateEvaluator<Model>, Model) -> Bool
 	private let sqlFn: (SqlPredicateCompiler<Model>) -> String
+//	static func all(_ type: Model.Type) -> Self {
+//		return PredicatePart
+//	}
 	init<T: PredicatePart>(_ part: T) where T.Model == Model {
 		eval = part.evaluate
 		sqlFn = part.sql
@@ -90,6 +93,15 @@ public enum PredicateValueOperator<V: SqlComparable> {
 		case .anyPredicate(let v):
 			return "in (\(v.sql(compiler)))"
 		}
+	}
+}
+
+struct TruePredicatePart<Model: Codable>: PredicatePart {
+	init() {
+	}
+	func evaluate(evaluator: PredicateEvaluator<Model>, _ model: Model) -> Bool { return true }
+	func sql(compiler: SqlPredicateCompiler<Model>) -> String {
+		return ""
 	}
 }
 
@@ -184,7 +196,12 @@ public final class Predicate<Model: Codable> {
 	private let composition: PredicateComposition
 	private var parts: [AnyPredicatePart<Model>] = []
 	//private var joins: [AnyPredicateJoin<Model>] = []
-	required init(_ composition: PredicateComposition) {
+	
+	init(_ part: AnyPredicatePart<Model>) {
+		self.composition = .all
+		_ = self.append(part)
+	}
+	init(_ composition: PredicateComposition) {
 		self.composition = composition
 	}
 	public func property<V: SqlComparable>(_ path: WritableKeyPath<Model, V>, _ valueOperator: PredicateValueOperator<V>) -> Predicate<Model> {

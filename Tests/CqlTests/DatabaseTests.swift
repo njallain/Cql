@@ -29,7 +29,7 @@ class DatabaseTests: SqiliteTestCase {
 			let conn = try db.open()
 			let row = Foo(id: 5, name: "test", description: "cde")
 			try conn.insert(row)
-			let results = try conn.find(Predicate.all(Foo.self).property(\.id, .equal(5)))
+			let results = try conn.find(Predicate(\Foo.id %== 5))
 			XCTAssertEqual(1, results.count)
 			verify(row, results)
 		} catch {
@@ -63,7 +63,7 @@ class DatabaseTests: SqiliteTestCase {
 			let row = Foo(id: 5, name: "test", description: "abc")
 			let updatedRow = Foo(id: 6, name: "test2", description: nil)
 			try conn.insert(row)
-			try conn.update(where: Predicate.all(Foo.self).property(\.id, .equal(5))) {
+			try conn.update(where: Predicate(\Foo.id %== 5)) {
 				$0.id = updatedRow.id
 				$0.name = updatedRow.name
 				$0.description = updatedRow.description
@@ -143,6 +143,7 @@ class DatabaseTests: SqiliteTestCase {
 			try conn.insert([o, o2])
 			try conn.insert([child1, child2, child3])
 			try txn.commit()
+//			let children = try conn.find(Predicate(KeyedFoo.children.in(AnyPredicatePart.all(FooChild.self))))
 			let children = try conn.findRelated(KeyedFoo.children, of: o)
 			XCTAssertEqual(2, children.count)
 			verify(child1, children)
@@ -240,8 +241,8 @@ class DatabaseTests: SqiliteTestCase {
 			try conn.insert([o, o2])
 			try conn.insert([child1, child2, child3])
 			try txn.commit()
-			let leftPred = Predicate.all(KeyedFoo.self)
-				.property(\.id, .equal(7))
+			let leftPred = Predicate(\KeyedFoo.id %== 7)
+				//.property(\.id, .equal(7))
 			let rightPred = Predicate.all(FooChild.self)
 			let results = try conn.find(JoinedQuery(ParentChild.self, left: leftPred, right: rightPred))
 			XCTAssertEqual(2, results.count)
