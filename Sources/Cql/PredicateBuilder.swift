@@ -17,7 +17,7 @@ infix operator %||: LogicalDisjunctionPrecedence
 infix operator %*: ComparisonPrecedence	// sql 'in'
 
 
-extension WritableKeyPath where Root: Codable, Value: SqlComparable {
+public extension WritableKeyPath where Root: Codable, Value: SqlComparable {
 	static func %== (left: WritableKeyPath<Root, Value>, right: Value) -> Predicate<Root> {
 		return Predicate(ComparePropertyValue(left, .equal(right)))
 	}
@@ -38,7 +38,7 @@ extension WritableKeyPath where Root: Codable, Value: SqlComparable {
 	}
 }
 
-extension Predicate {
+public extension Predicate {
 	static func %&& (left: Predicate<Model>, right: Predicate<Model>) -> Predicate<Model> {
 		return Predicate(ComposePredicate(.all, left, right))
 	}
@@ -50,7 +50,7 @@ extension Predicate {
 	}
 }
 
-extension RelationToMany {
+public extension RelationToMany {
 	func `in`(_ predicate: Predicate<Target>) -> Predicate<Source> {
 		//let oldPredicate = Predicate.all(Target.self).append(predicate)
 		let subPred = AnySubPredicate(SubPredicate(selectProperty: self.keyPath, predicate: predicate))
@@ -59,7 +59,7 @@ extension RelationToMany {
 	}
 }
 
-extension RelationToOne {
+public extension RelationToOne {
 	func `in`(_ predicate: Predicate<Target>) -> Predicate<Source> {
 		//let oldPredicate = Predicate.all(Target.self).append(predicate)
 		let subPred = AnySubPredicate(SubPredicate(selectProperty: Target.primaryKey, predicate: predicate))
