@@ -216,7 +216,7 @@ class DatabaseTests: SqiliteTestCase {
 		var numCalls = 0
 		let pred = Predicate.all(KeyedFoo.self)
 		let order = Order(by: \KeyedFoo.id)
-		try conn.find(query: Query(predicate: pred, pageSize: pageSize, order: order)) {
+		try conn.fetch(query: Query(predicate: pred, pageSize: pageSize, order: order)) {
 			numCalls += 1
 			result = result + $0
 			return true

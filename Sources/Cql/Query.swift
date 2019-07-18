@@ -39,7 +39,7 @@ public extension StorageConnection {
 //	func find<T1: Codable, T2: Codable>(_ predicate: JoinedPredicate<T1, T2>, pagedBy: Int, results: ([(T1,T2)]) -> Bool) throws
 	func find<T: Codable>(_ predicate: Predicate<T>) throws -> [T] {
 		var results: [T]? = nil
-		try self.find(query: Query(predicate: predicate, pageSize: Int.max)) {
+		try self.fetch(query: Query(predicate: predicate, pageSize: Int.max)) {
 			results = $0
 			return true
 		}
@@ -47,7 +47,7 @@ public extension StorageConnection {
 	}
 	func find<T: Codable>(_ query: Query<T>) throws -> [T] {
 		var results: [T]? = nil
-		try self.find(query: query) {
+		try self.fetch(query: query) {
 			results = $0
 			return true
 		}
@@ -55,7 +55,7 @@ public extension StorageConnection {
 	}
 	func find<T: SqlJoin>(_ query: JoinedQuery<T>) throws -> [T] {
 		var results: [T]? = nil
-		try self.find(query: query) {
+		try self.fetch(query: query) {
 			results = $0
 			return true
 		}

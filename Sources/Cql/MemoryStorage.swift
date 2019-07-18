@@ -112,7 +112,7 @@ public class MemoryConnection: StorageConnection {
 		let rows = storage.rows(T.self).filter { !predicate.evaluate(evaluator: eval, $0) }
 		storage.set(rows: rows)
 	}
-	public func find<T: Codable>(query: Query<T>, results: ([T]) -> Bool) throws {
+	public func fetch<T: Codable>(query: Query<T>, results: ([T]) -> Bool) throws {
 		let eval = PredicateEvaluator<T>(storage: self.storage)
 		var partialResults = [T]()
 		var all = eval.findAll(query.predicate)
@@ -131,7 +131,7 @@ public class MemoryConnection: StorageConnection {
 		}
 	}
 	
-	public func find<T: SqlJoin>(query: JoinedQuery<T>, results: ([T]) -> Bool) throws {
+	public func fetch<T: SqlJoin>(query: JoinedQuery<T>, results: ([T]) -> Bool) throws {
 		let leftEval = PredicateEvaluator<T.Left>(storage: self.storage)
 		let rightEval = PredicateEvaluator<T.Right>(storage: self.storage)
 		let leftObjs = leftEval.findAll(query.predicate.leftPredicate)

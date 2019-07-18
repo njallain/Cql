@@ -259,7 +259,7 @@ public class SqlConnection: StorageConnection {
 		let sql = "delete from \(schema.name) \(whereSql)"
 		try driver.execute(sql: sql, arguments: sqlBuilder.arguments)
 	}
-	public func find<T: Codable>(query: Query<T>, results: ([T]) -> Bool) throws {
+	public func fetch<T: Codable>(query: Query<T>, results: ([T]) -> Bool) throws {
 		let schema = database.schema(for: T.self)
 		let sqlBuilder = SqlPredicateCompiler<T>(database: database)
 		let sql = sqlBuilder.compile(query)
@@ -277,7 +277,7 @@ public class SqlConnection: StorageConnection {
 		}
 	}
 	
-	public func find<T: SqlJoin>(query: JoinedQuery<T>, results: ([T]) -> Bool) throws {
+	public func fetch<T: SqlJoin>(query: JoinedQuery<T>, results: ([T]) -> Bool) throws {
 		let leftSchema = database.schema(for: T.Left.self)
 		let rightSchema = database.schema(for: T.Right.self)
 		let compiler = SqlPredicateCompiler<T>(database: database)
