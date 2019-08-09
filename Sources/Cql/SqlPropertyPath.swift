@@ -66,7 +66,7 @@ enum SqlPropertyPath {
 	- Parameter keyPath: the key path to the joined table
 	- Parameter valueKeyPath: a key path of any property on the joined table that can be changed so the changed property can be detected
 	*/
-	static func path<T: SqlJoin, V: Codable, P: SqlConvertible>(_ row: T, keyPath: WritableKeyPath<T,V>, value: V, valueKeyPath: WritableKeyPath<V, P>) -> String? {
+	static func path<T: Codable, V: Codable, P: SqlConvertible>(_ row: T, keyPath: WritableKeyPath<T,V>, value: V, valueKeyPath: WritableKeyPath<V, P>) -> String? {
 		if let cachedName = cachedNames[keyPath] {
 			return cachedName
 		}
@@ -81,6 +81,26 @@ enum SqlPropertyPath {
 		return nil
 	}
 
+	/**
+	Returns the property name of the join property.  This will be will be used to determine table alias names
+	- Parameter row: a sample row of the join
+	- Parameter keyPath: the key path to the joined table
+	- Parameter valueKeyPath: a key path of any property on the joined table that can be changed so the changed property can be detected
+	*/
+	static func optionalPath<T: Codable, V: Codable, P: SqlConvertible>(_ row: T, keyPath: WritableKeyPath<T,V>, value: V, valueKeyPath: WritableKeyPath<V, P?>) -> String? {
+		if let cachedName = cachedNames[keyPath] {
+			return cachedName
+		}
+		do {
+			if let path = try SqlCoder<T>().path(row, keyPath: keyPath, valueKeyPath: valueKeyPath) {
+				cachedNames[keyPath] = path
+				return path
+			}
+		} catch {
+			print("unable to determine path of \(String(describing: keyPath))")
+		}
+		return nil
+	}
 	private static func path<T: Codable, V: SqlConvertible>(_ coder: SqlCoder<T>, _ row: T, keyPath: WritableKeyPath<T, V>) -> String? {
 		if let cachedName = cachedNames[keyPath] {
 			return cachedName
@@ -231,6 +251,25 @@ extension SqlCoder {
 		
 		var changedRow = row
 		changedRow[keyPath: keyPath] = val.differentValue
+		let changedVals = try record(changedRow).valuesByName
+		
+		for (k,v) in changedVals {
+			if let pv = currentVals[k] {
+				if v != pv {
+					return k
+				}
+			}
+		}
+		return nil
+	}
+	fileprivate func path<P: Codable, V: SqlConvertible>(_ row: T, keyPath: WritableKeyPath<T, P>, valueKeyPath: WritableKeyPath<P, V?>) throws -> String? {
+		let p = row[keyPath: keyPath]
+		let v = p[keyPath: valueKeyPath] ?? V.defaultValue
+		let currentVals = try record(row).valuesByName
+		var changedRow = row
+		var changedCodable = changedRow[keyPath: keyPath]
+		changedCodable[keyPath: valueKeyPath] = v.differentValue
+		changedRow[keyPath: keyPath] = changedCodable
 		let changedVals = try record(changedRow).valuesByName
 		
 		for (k,v) in changedVals {

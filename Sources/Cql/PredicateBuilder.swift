@@ -50,6 +50,15 @@ public extension Predicate {
 	}
 }
 
+public extension RelationToOptionalMany {
+	func `in`(_ predicate: Predicate<Target>) -> Predicate<Source> {
+		//let oldPredicate = Predicate.all(Target.self).append(predicate)
+		let subPred = AnySubPredicate(OptionalSubPredicate(selectProperty: self.keyPath, predicate: predicate))
+		let inPred = ComparePropertyValue(Source.primaryKey, .anyPredicate(subPred))
+		return Predicate(inPred)
+	}
+}
+
 public extension RelationToMany {
 	func `in`(_ predicate: Predicate<Target>) -> Predicate<Source> {
 		//let oldPredicate = Predicate.all(Target.self).append(predicate)
@@ -58,6 +67,7 @@ public extension RelationToMany {
 		return Predicate(inPred)
 	}
 }
+
 
 public extension RelationToOne {
 	func `in`(_ predicate: Predicate<Target>) -> Predicate<Source> {

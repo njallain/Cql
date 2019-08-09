@@ -155,7 +155,6 @@ struct ComparePropertyValue<Model: Codable, V: SqlComparable>: PredicatePart {
 }
 
 
-
 struct SubPredicate<Property: SqlComparable, Model: Codable> {
 	let selectProperty: WritableKeyPath<Model, Property>
 	let predicate: Predicate<Model>
@@ -177,11 +176,37 @@ struct SubPredicate<Property: SqlComparable, Model: Codable> {
 	}
 }
 
+struct OptionalSubPredicate<Property: SqlComparable, Model: Codable> {
+	let selectProperty: WritableKeyPath<Model, Property?>
+	let predicate: Predicate<Model>
+	
+	func sql(compiler: SqlCompiler) -> String {
+		let rightCompiler = compiler.childCompiler(for: Model.self)
+		guard let rightTable = rightCompiler.table else {
+			fatalError("table \(String(describing: Model.self)) not defined")
+		}
+		let predSql = rightCompiler.compile(predicate)
+		let subSelect = "select \(rightCompiler.name(for: selectProperty)) from \(rightTable.name) as \(rightCompiler.tableAlias) where \(predSql.whereClause)"
+		compiler.arguments.append(contentsOf: rightCompiler.arguments)
+		return subSelect
+	}
+	func evaluate(evaluator: PredicateEvaluatorProtocol, value: Property) -> Bool {
+		let childEval = evaluator.childEvaluator(Model.self)
+		let matches = childEval.findAll(predicate)
+		return matches.reduce(false) { $0 || $1[keyPath: self.selectProperty] == value }
+	}
+
+}
+
 /**
 A type-erased SubPredicate (the inner model is erased)
 */
 public struct AnySubPredicate<Property: SqlComparable> {
 	init<Model: Codable>(_ subPredicate: SubPredicate<Property, Model>) {
+		self.sql = subPredicate.sql
+		self.evaluate = subPredicate.evaluate
+	}
+	init<Model: Codable>(_ subPredicate: OptionalSubPredicate<Property, Model>) {
 		self.sql = subPredicate.sql
 		self.evaluate = subPredicate.evaluate
 	}

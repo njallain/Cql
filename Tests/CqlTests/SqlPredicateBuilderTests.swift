@@ -12,7 +12,7 @@ import XCTest
 class SqlPredicateBuilderTests: SqiliteTestCase {
 
 	private func openTestDatabase() throws -> Database {
-		return try openDatabase([.table(PredTest.self), .table(Child.self)])
+		return try openDatabase([.table(PredTest.self), .table(Child.self), .table(OptionalItem.self)])
 	}
 
 	func testSqlPredicate() {
@@ -81,7 +81,21 @@ class SqlPredicateBuilderTests: SqiliteTestCase {
 		} catch {
 			XCTFail("\(error.localizedDescription)")
 		}
-
+	}
+	func testNullableSubPredicate() {
+		do {
+			let db = try openTestDatabase()
+			let childPred = \OptionalItem.description %== "test"
+			let pred = PredTest.items.in(childPred)
+			let sqlBuilder = SqlPredicateCompiler<PredTest>(database: db)
+			let sql = sqlBuilder.compile(pred)
+			XCTAssertEqual("id in (select OptionalItem.parentId from OptionalItem as OptionalItem where OptionalItem.description = {argOptionalItem0})", sql.whereClause)
+			XCTAssertEqual(1, sqlBuilder.arguments.count)
+			XCTAssertEqual(SqlValue.text("test"), sqlBuilder.arguments[0].value)
+		} catch {
+			XCTFail("\(error.localizedDescription)")
+		}
+//		let pred = OptionalSubPredicate(selectProperty: \OptionalItem.parentId, predicate: Predicate.all(OptionalItem.self))
 	}
 	func testOrderedQuery() {
 		do {
@@ -118,6 +132,7 @@ fileprivate struct PredTest: PrimaryKeyTable {
 	var senum: StringEnum? = nil
 	static let primaryKey = \PredTest.id
 	static let children = toMany(\Child.parentId)
+	static let items = toMany(\OptionalItem.parentId)
 }
 
 fileprivate struct Child: SqlTableRepresentable {
@@ -125,4 +140,13 @@ fileprivate struct Child: SqlTableRepresentable {
 	var description = ""
 	
 	static let parent = toOne(PredTest.self, \Child.parentId)
+}
+
+
+fileprivate struct OptionalItem: PrimaryKeyTable {
+	var id = 0
+	var parentId: Int? = nil
+	var description = ""
+	static let primaryKey = \OptionalItem.id
+//	static let parent = toOne(PredTest.self, \.parentId)
 }

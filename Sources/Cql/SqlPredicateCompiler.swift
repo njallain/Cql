@@ -44,6 +44,13 @@ class SqlPredicateCompiler<T: Codable>: SqlCompiler {
 		}
 		return "\(tablePrefix)\(n.name)"
 	}
+	func name<V: SqlConvertible>(for keyPath: WritableKeyPath<T,V?>) -> String {
+		guard let n = table?.column(keyPath: keyPath) else {
+			fatalError("could not find column for key path: \(keyPath), this may be caused by attempting to query on a property that isn't SqlConvertible")
+			//throw DatabaseError("could not find column for key path: \(keyPath)")
+		}
+		return "\(tablePrefix)\(n.name)"
+	}
 	func compile(_ predicate: Predicate<T>) -> CompiledSql {
 		return compile(Query(predicate: predicate))
 	}

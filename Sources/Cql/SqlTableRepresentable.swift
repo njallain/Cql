@@ -124,9 +124,21 @@ public struct RelationToMany<Source: PrimaryKeyTable, Target: Codable> {
 	}
 }
 
+public struct RelationToOptionalMany<Source: PrimaryKeyTable, Target: Codable> {
+	let keyPath: WritableKeyPath<Target, Source.Key?>
+	public let join: OptionalJoinProperty<Source, Target, Source.Key>
+	init(_ keyPath: WritableKeyPath<Target, Source.Key?>, _ target: Target.Type) {
+		self.keyPath = keyPath
+		self.join = OptionalJoinProperty(left: Source.primaryKey, right: keyPath)
+	}
+}
+
 public extension PrimaryKeyTable {
 	static func toMany<Target: Codable>(_ keyPath: WritableKeyPath<Target, Key>) -> RelationToMany<Self, Target> {
 		return RelationToMany(keyPath, Target.self)
+	}
+	static func toMany<Target: Codable>(_ keyPath: WritableKeyPath<Target, Key?>) -> RelationToOptionalMany<Self, Target> {
+		return RelationToOptionalMany(keyPath, Target.self)
 	}
 }
 
