@@ -7,16 +7,28 @@
 
 import Foundation
 
+public protocol AnyJoin: Codable, Initable {
+	associatedtype Left: Codable
+	associatedtype Right: Codable
+	static var left: WritableKeyPath<Self, Left> {get}
+	static var right: WritableKeyPath<Self, Right> {get}
+	static func leftName(_ row: Self.Left) -> String
+	static func rightName(_ row: Self.Right) -> String
+}
+
+extension AnyJoin {
+	init(left: Self.Left, right: Self.Right) {
+		self.init()
+		self[keyPath: Self.left] = left
+		self[keyPath: Self.right] = right
+	}
+}
 /**
 Implement this to define a joined query. 
 */
-public protocol SqlJoin: Codable, Initable {
-	associatedtype Left: Codable
-	associatedtype Right: Codable
+public protocol SqlJoin: AnyJoin {
 	associatedtype Property: SqlComparable
 	static var relationship: JoinProperty<Left, Right, Property> {get}
-	static var left: WritableKeyPath<Self, Left> {get}
-	static var right: WritableKeyPath<Self, Right> {get}
 }
 public struct JoinProperty<Left: Codable, Right: Codable, Property: SqlComparable> {
 	var left: WritableKeyPath<Left, Property>
@@ -24,11 +36,6 @@ public struct JoinProperty<Left: Codable, Right: Codable, Property: SqlComparabl
 }
 
 extension SqlJoin {
-	init(left: Self.Left, right: Self.Right) {
-		self.init()
-		self[keyPath: Self.left] = left
-		self[keyPath: Self.right] = right
-	}
 	static func leftName(_ row: Self.Left) -> String {
 		guard let n = SqlPropertyPath.path(Self(), keyPath: Self.left, value: row, valueKeyPath: Self.relationship.left) else {
 			fatalError("could not determine path name for \(Self.left)")
@@ -49,22 +56,13 @@ public struct OptionalJoinProperty<Left: Codable, Right: Codable, Property: SqlC
 }
 
 
-public protocol OptionalSqlJoin: Codable, Initable {
-	associatedtype Left: Codable
-	associatedtype Right: Codable
+public protocol OptionalSqlJoin: AnyJoin {
 	associatedtype Property: SqlComparable
 	static var relationship: OptionalJoinProperty<Left, Right, Property> {get}
-	static var left: WritableKeyPath<Self, Left> {get}
-	static var right: WritableKeyPath<Self, Right> {get}
 }
 
 
 extension OptionalSqlJoin {
-	init(left: Self.Left, right: Self.Right) {
-		self.init()
-		self[keyPath: Self.left] = left
-		self[keyPath: Self.right] = right
-	}
 	static func leftName(_ row: Self.Left) -> String {
 		guard let n = SqlPropertyPath.path(Self(), keyPath: Self.left, value: row, valueKeyPath: Self.relationship.left) else {
 			fatalError("could not determine path name for \(Self.left)")
@@ -78,3 +76,13 @@ extension OptionalSqlJoin {
 		return n
 	}
 }
+
+//public struct AnyJoin<Left: Codable, Right: Codable, Property: SqlComparable> {
+//	init<T: SqlJoin>(join: T) where T.Left == Left, T.Right == Right, T.Property == Property {
+//		getLeft = { join[keyPath: T.left] }
+//		getRight = { join[keyPath: T.right] }
+//	}
+//	public var leftSide
+//	private var getLeft: () -> Left
+//	private var getRight: () -> Right
+//}

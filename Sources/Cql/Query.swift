@@ -19,20 +19,29 @@ public struct Query<T: Codable> {
 	
 }
 
-public struct JoinedQuery<T: SqlJoin> {
-	public init(_ type: T.Type, left: Predicate<T.Left>, right: Predicate<T.Right>, pageSize: Int = Int.max, order: Order<T>? = nil) {
-//		let joinExpr = AnyJoinExpression(JoinExpression(left: Model.primaryKey, right: relationship.keyPath))
-//		return JoinedPredicate(joinExpressions: [joinExpr], leftPredicate: self, rightPredicate: predicate)
-		let joinExpr = AnyJoinExpression(JoinExpression(left: type.relationship.left, right: type.relationship.right))
-		self.predicate = JoinedPredicate(joinExpressions: [joinExpr], leftPredicate: left, rightPredicate: right)
-		self.pageSize = pageSize
-		self.order = order
-	}
+public struct JoinedQuery<T: AnyJoin> {
 	let predicate: JoinedPredicate<T.Left,T.Right>
 	public let pageSize: Int
 	public let order: Order<T>?
 }
 
+public extension JoinedQuery where T: SqlJoin {
+	init(_ type: T.Type, left: Predicate<T.Left>, right: Predicate<T.Right>, pageSize: Int = Int.max, order: Order<T>? = nil) {
+		let joinExpr = AnyJoinExpression(JoinExpression(left: type.relationship.left, right: type.relationship.right))
+		self.predicate = JoinedPredicate(joinExpressions: [joinExpr], leftPredicate: left, rightPredicate: right)
+		self.pageSize = pageSize
+		self.order = order
+	}
+}
+
+public extension JoinedQuery where T: OptionalSqlJoin {
+	init(_ type: T.Type, left: Predicate<T.Left>, right: Predicate<T.Right>, pageSize: Int = Int.max, order: Order<T>? = nil) {
+		let joinExpr = AnyJoinExpression(OptionalJoinExpression(left: type.relationship.left, right: type.relationship.right))
+		self.predicate = JoinedPredicate(joinExpressions: [joinExpr], leftPredicate: left, rightPredicate: right)
+		self.pageSize = pageSize
+		self.order = order
+	}
+}
 
 public extension StorageConnection {
 //	func find<T: Codable>(_ predicate: Predicate<T>, pagedBy: Int, results: ([T]) -> Bool) throws
@@ -53,7 +62,7 @@ public extension StorageConnection {
 		}
 		return results ?? []
 	}
-	func find<T: SqlJoin>(_ query: JoinedQuery<T>) throws -> [T] {
+	func find<T: AnyJoin>(_ query: JoinedQuery<T>) throws -> [T] {
 		var results: [T]? = nil
 		try self.fetch(query: query) {
 			results = $0

@@ -277,7 +277,7 @@ public class SqlConnection: StorageConnection {
 		}
 	}
 	
-	public func fetch<T: SqlJoin>(query: JoinedQuery<T>, results: ([T]) -> Bool) throws {
+	public func fetch<T: AnyJoin>(query: JoinedQuery<T>, results: ([T]) -> Bool) throws {
 		let leftSchema = database.schema(for: T.Left.self)
 		let rightSchema = database.schema(for: T.Right.self)
 		let compiler = SqlPredicateCompiler<T>(database: database)

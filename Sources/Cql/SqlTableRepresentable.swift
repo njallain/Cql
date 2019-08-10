@@ -115,6 +115,24 @@ extension RelationToOne: ForeignKeyRelation where Source: SqlTableRepresentable 
 		return ForeignKey(columnName: keyName, foreignTable: String(describing:Target.self), foreignColumn: pkName)
 	}
 }
+public struct RelationToOptionalOne<Source: Codable, Target: PrimaryKeyTable> {
+	let keyPath: WritableKeyPath<Source, Target.Key?>
+	//public let join: OptionalJoinProperty<Source, Target, Target.Key>
+	init(_ target: Target.Type, _ keyPath: WritableKeyPath<Source, Target.Key?>) {
+		self.keyPath = keyPath
+//		self.join = OptionalJoinProperty(left: keyPath, right: Target.primaryKey)
+	}
+}
+extension RelationToOptionalOne: ForeignKeyRelation where Source: SqlTableRepresentable {
+	public func buildForeignKey() -> ForeignKey {
+		guard let keyName = SqlPropertyPath.path(Source(), keyPath: self.keyPath),
+			let pkName = SqlPropertyPath.path(Target(), keyPath: Target.primaryKey) else {
+			fatalError("could not determine property path for \(self.keyPath)")
+		}
+		return ForeignKey(columnName: keyName, foreignTable: String(describing:Target.self), foreignColumn: pkName)
+	}
+}
+
 public struct RelationToMany<Source: PrimaryKeyTable, Target: Codable> {
 	let keyPath: WritableKeyPath<Target, Source.Key>
 	public let join: JoinProperty<Source, Target, Source.Key>
@@ -145,6 +163,10 @@ public extension PrimaryKeyTable {
 public extension Encodable where Self: Decodable {
 	static func toOne<Target: PrimaryKeyTable>(_ target: Target.Type, _ keyPath: WritableKeyPath<Self, Target.Key>) -> RelationToOne<Self, Target> {
 		let relation = RelationToOne(target, keyPath)
+		return relation
+	}
+	static func toOne<Target: PrimaryKeyTable>(_ target: Target.Type, _ keyPath: WritableKeyPath<Self, Target.Key?>) -> RelationToOptionalOne<Self, Target> {
+		let relation = RelationToOptionalOne(target, keyPath)
 		return relation
 	}
 }

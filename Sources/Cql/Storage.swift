@@ -58,7 +58,7 @@ public protocol StorageConnection {
 	The results function will be called however many times needed to return all results, or until it returns
 	false to stop the query.
 	*/
-	func fetch<T: SqlJoin>(query: JoinedQuery<T>, results: ([T]) -> Bool) throws
+	func fetch<T: AnyJoin>(query: JoinedQuery<T>, results: ([T]) -> Bool) throws
 	
 	func get<T: PrimaryKeyTable>(_ type: T.Type, _ id: T.Key) throws -> T?
 	func get<T: PrimaryKeyTable2>(_ type: T.Type, _ id1: T.Key1, _ id2: T.Key2) throws -> T?

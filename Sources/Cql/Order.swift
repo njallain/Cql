@@ -82,7 +82,7 @@ fileprivate struct OrderByProperty<T: Codable> {
 
 }
 
-public extension Order where T: SqlJoin {
+public extension Order where T: AnyJoin {
 	/**
 	Creates an order for a joined query
 	- Parameter by the property of the joined table to sort by
@@ -94,7 +94,7 @@ public extension Order where T: SqlJoin {
 	}
 
 }
-fileprivate extension OrderByProperty where T: SqlJoin {
+fileprivate extension OrderByProperty where T: AnyJoin {
 	init<J: Codable, P: SqlComparable>(_ join: WritableKeyPath<T, J>, _ property: WritableKeyPath<J, P>, descending: Bool = false) {
 		let fullPath = join.appending(path: property)
 		let lessThan: (T, T) -> Bool = { lhs, rhs in

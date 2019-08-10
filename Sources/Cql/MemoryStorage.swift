@@ -131,7 +131,7 @@ public class MemoryConnection: StorageConnection {
 		}
 	}
 	
-	public func fetch<T: SqlJoin>(query: JoinedQuery<T>, results: ([T]) -> Bool) throws {
+	public func fetch<T: AnyJoin>(query: JoinedQuery<T>, results: ([T]) -> Bool) throws {
 		let leftEval = PredicateEvaluator<T.Left>(storage: self.storage)
 		let rightEval = PredicateEvaluator<T.Right>(storage: self.storage)
 		let leftObjs = leftEval.findAll(query.predicate.leftPredicate)

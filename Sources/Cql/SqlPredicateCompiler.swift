@@ -75,7 +75,7 @@ class SqlPredicateCompiler<T: Codable>: SqlCompiler {
 	
 }
 
-extension SqlPredicateCompiler where T: SqlJoin {
+extension SqlPredicateCompiler where T: AnyJoin {
 	func compile(_ query: JoinedQuery<T>) -> CompiledSql {
 		/* to determine the alias names (the names of the left and right properties):
 				- create an instance of the joined obj (using schema)
@@ -103,11 +103,16 @@ extension SqlPredicateCompiler where T: SqlJoin {
 	}
 
 	func name<J: Codable, V: SqlConvertible>(for keyPath: WritableKeyPath<J,V>, through join: WritableKeyPath<T, J>) -> String {
+		return name(for: keyPath, joinLeft: T.self, joinRight: J.self)
+	}
+	func name<J: Codable, V: SqlConvertible>(for keyPath: WritableKeyPath<J,V>, through join: WritableKeyPath<T, J?>) -> String {
+		return name(for: keyPath, joinLeft: T.self, joinRight: J.self)
+	}
+
+
+	private func name<J: Codable, V: SqlConvertible>(for keyPath: WritableKeyPath<J,V>, joinLeft: T.Type, joinRight: J.Type) -> String {
+		
 		let joinedTable = database.schema(for: J.self)
-//		let row = T()
-//		guard let joinName = SqlPropertyPath.path(row, keyPath: join, value: row[keyPath: join], valueKeyPath: ) else {
-//			fatalError("could not determine path name for \(String(describing: join))")
-//		}
 		let joinName: String
 		if J.self == T.Left.self {
 			let table = database.schema(for: T.Left.self)
@@ -121,5 +126,4 @@ extension SqlPredicateCompiler where T: SqlJoin {
 		}
 		return "\(joinName).\(column.name)"
 	}
-
 }

@@ -23,8 +23,28 @@ struct JoinExpression<LeftModel: Codable, RightModel: Codable, Property: SqlConv
 	}
 }
 
+struct OptionalJoinExpression<LeftModel: Codable, RightModel: Codable, Property: SqlConvertible> {
+	let left: WritableKeyPath<LeftModel, Property>
+	let right: WritableKeyPath<RightModel, Property?>
+	
+	func evaluate(_ lhs: LeftModel, _ rhs: RightModel) -> Bool {
+		return lhs[keyPath: left].sqlValue == rhs[keyPath: right]?.sqlValue
+	}
+	func leftName(compiler: SqlPredicateCompiler<LeftModel>) -> String {
+		return compiler.name(for: left)
+	}
+	func rightName(compiler: SqlPredicateCompiler<RightModel>) -> String {
+		return compiler.name(for: right)
+	}
+}
+
 struct AnyJoinExpression<LeftModel: Codable, RightModel: Codable> {
 	init<Property: SqlConvertible>(_ joinExpression: JoinExpression<LeftModel, RightModel, Property>) {
+		self.evaluate = joinExpression.evaluate
+		self.leftName = joinExpression.leftName
+		self.rightName = joinExpression.rightName
+	}
+	init<Property: SqlConvertible>(_ joinExpression: OptionalJoinExpression<LeftModel, RightModel, Property>) {
 		self.evaluate = joinExpression.evaluate
 		self.leftName = joinExpression.leftName
 		self.rightName = joinExpression.rightName

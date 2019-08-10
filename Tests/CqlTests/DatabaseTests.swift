@@ -19,6 +19,7 @@ class DatabaseTests: SqiliteTestCase {
 				.table(FooChild.self),
 				.table(KeyedFoo.self),
 				.table(DoubleKeyed.self),
+				.table(OptChild.self),
 			])
 	}
 	
@@ -279,6 +280,34 @@ class DatabaseTests: SqiliteTestCase {
 		}
 	}
 
+	func testOptionalJoinedObjects() {
+		do {
+			let db = try openTestDatabase()
+			let conn = try db.open()
+			let o = KeyedFoo(id: 7, name: "my name", description: "desc", senum: .val2, nenum: .val2)
+			let o2 = KeyedFoo(id: 8, name: "foo2", description: "desc", senum: .val1, nenum: nil)
+			let child1 = OptChild(id: 1, parentId: 7, name: "o1_7")
+			let child2 = OptChild(id: 2, parentId: nil, name: "no parent")
+			let child3 = OptChild(id: 3, parentId: 7, name: "o2_7")
+			let child4 = OptChild(id: 4, parentId: 8, name: "o1_8")
+			let txn = try conn.beginTransaction()
+			try conn.insert([o, o2])
+			try conn.insert([child1, child2, child3, child4])
+			try txn.commit()
+			let leftPred = \KeyedFoo.id %== 7
+			let rightPred = Predicate.all(OptChild.self)
+			let order = Order(by: \KeyedFoo.name, through: \ParentOptChild.parent)
+			let query = JoinedQuery(ParentOptChild.self, left: leftPred, right: rightPred, order: order)
+			let results = try conn.find(query)
+			XCTAssertEqual(2, results.count)
+			if results.count >= 2 {
+				verify(o, results.map({$0.parent})[0])
+				verify(o, results.map({$0.parent})[1])
+			}
+		} catch {
+			XCTFail(error.localizedDescription)
+		}
+	}
 	func testNextId() {
 		do {
 			let db = try openTestDatabase()
@@ -362,8 +391,17 @@ fileprivate struct KeyedFoo: PrimaryKeyTable, Codable {
 	
 	static let primaryKey = \KeyedFoo.id
 	static let children = toMany(\FooChild.fooId)
+	static let optChildren = toMany(\OptChild.parentId)
 }
 
+fileprivate struct OptChild: PrimaryKeyTable {
+	var id: Int = 0
+	var parentId: Int? = nil
+	var name: String = ""
+	static let primaryKey = \OptChild.id
+	static let parent = toOne(KeyedFoo.self, \.parentId)
+	static let foreignKeys = [parent]
+}
 fileprivate struct DoubleKeyed: PrimaryKeyTable2 {
 	var leftId: Int = 0
 	var rightId: Int = 0
@@ -379,12 +417,24 @@ fileprivate struct FooChild: SqlTableRepresentable {
 }
 
 fileprivate struct ParentChild: SqlJoin {
+	typealias Property = Int
+	
 	var parent = KeyedFoo()
 	var child = FooChild()
 	static let left = \ParentChild.parent
 	static let right = \ParentChild.child
 //	static let relationship = JoinProperty(left: \KeyedFoo.id, right: \FooChild.fooId)
 	static let relationship = KeyedFoo.children.join
+}
+
+fileprivate struct ParentOptChild: OptionalSqlJoin {
+	typealias Property = Int
+	
+	var parent = KeyedFoo()
+	var child = OptChild()
+	static let left = \ParentOptChild.parent
+	static let right = \ParentOptChild.child
+	static let relationship = KeyedFoo.optChildren.join
 }
 class MemoryStorageTests: DatabaseTests {
 	override func openTestDatabase() throws -> Storage {

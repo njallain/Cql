@@ -93,8 +93,6 @@ fileprivate struct Child: Codable {
 }
 
 fileprivate struct Join: SqlJoin {
-	typealias Left = Parent
-	typealias Right = Child
 	var myParent: Parent = Parent()
 	var myChild: Child = Child(details: "", parentId: UUID())
 	static let relationship = JoinProperty(left: \Parent.id, right: \Child.parentId)
