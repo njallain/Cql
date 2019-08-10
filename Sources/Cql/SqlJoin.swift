@@ -35,7 +35,7 @@ public struct JoinProperty<Left: Codable, Right: Codable, Property: SqlComparabl
 	var right: WritableKeyPath<Right, Property>
 }
 
-extension SqlJoin {
+public extension SqlJoin {
 	static func leftName(_ row: Self.Left) -> String {
 		guard let n = SqlPropertyPath.path(Self(), keyPath: Self.left, value: row, valueKeyPath: Self.relationship.left) else {
 			fatalError("could not determine path name for \(Self.left)")
@@ -62,7 +62,7 @@ public protocol OptionalSqlJoin: AnyJoin {
 }
 
 
-extension OptionalSqlJoin {
+public extension OptionalSqlJoin {
 	static func leftName(_ row: Self.Left) -> String {
 		guard let n = SqlPropertyPath.path(Self(), keyPath: Self.left, value: row, valueKeyPath: Self.relationship.left) else {
 			fatalError("could not determine path name for \(Self.left)")
