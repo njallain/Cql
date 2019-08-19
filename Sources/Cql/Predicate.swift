@@ -153,6 +153,23 @@ struct ComparePropertyValue<Model: Codable, V: SqlComparable>: PredicatePart {
 		return "\(propName) \(valueOperator.sql(compiler: compiler))"
 	}
 }
+struct CompareOptionalPropertyValue<Model: Codable, V: SqlComparable>: PredicatePart {
+	private let path: WritableKeyPath<Model,V?>
+	private let valueOperator: PredicateValueOperator<V>
+	init(_ path: WritableKeyPath<Model, V?>, _ val: PredicateValueOperator<V>) {
+		self.path = path
+		self.valueOperator = val
+	}
+	func evaluate(evaluator: PredicateEvaluator<Model>, _ model: Model) -> Bool {
+		guard let p = model[keyPath: path] else { return false }
+		return evaluator.evaluate(p, valueOperator)
+	}
+	func sql(compiler: SqlPredicateCompiler<Model>) -> String {
+		let propName = compiler.name(for: path)
+		return "\(propName) \(valueOperator.sql(compiler: compiler))"
+	}
+}
+
 
 
 struct SubPredicate<Property: SqlComparable, Model: Codable> {

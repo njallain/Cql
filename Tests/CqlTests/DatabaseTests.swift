@@ -280,6 +280,33 @@ class DatabaseTests: SqiliteTestCase {
 		}
 	}
 
+	func testOptionalComparison() {
+		do {
+			let db = try openTestDatabase()
+			let conn = try db.open()
+			let o = KeyedFoo(id: 7, name: "my name", description: "desc", senum: .val2, nenum: .val2)
+			let o2 = KeyedFoo(id: 8, name: "foo2", description: "desc", senum: .val1, nenum: nil)
+			let child1 = OptChild(id: 1, parentId: 7, name: "o1_7")
+			let child2 = OptChild(id: 2, parentId: nil, name: "no parent")
+			let child3 = OptChild(id: 3, parentId: 7, name: "o2_7")
+			let child4 = OptChild(id: 4, parentId: 8, name: "o1_8")
+			let txn = try conn.beginTransaction()
+			try conn.insert([o, o2])
+			try conn.insert([child1, child2, child3, child4])
+			try txn.commit()
+			let pred = \OptChild.parentId %== 7
+			let order = Order(by: \OptChild.id)
+			let query = Query(predicate: pred, order: order)
+			let results = try conn.find(query)
+			XCTAssertEqual(2, results.count)
+			if results.count >= 2 {
+				XCTAssertEqual(1, results[0].id)
+				XCTAssertEqual(3, results[1].id)
+			}
+		} catch {
+			XCTFail(error.localizedDescription)
+		}
+	}
 	func testOptionalJoinedObjects() {
 		do {
 			let db = try openTestDatabase()

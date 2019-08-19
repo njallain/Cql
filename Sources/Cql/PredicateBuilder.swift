@@ -21,6 +21,9 @@ public extension WritableKeyPath where Root: Codable, Value: SqlComparable {
 	static func %== (left: WritableKeyPath<Root, Value>, right: Value) -> Predicate<Root> {
 		return Predicate(ComparePropertyValue(left, .equal(right)))
 	}
+	static func %== (left: WritableKeyPath<Root, Value?>, right: Value) -> Predicate<Root> {
+		return Predicate(CompareOptionalPropertyValue(left, .equal(right)))
+	}
 	static func %>= (left: WritableKeyPath<Root, Value>, right: Value) -> Predicate<Root> {
 		return Predicate(ComparePropertyValue(left, .greaterThanOrEqual(right)))
 	}
