@@ -103,6 +103,17 @@ public extension StorageConnection {
 		let predicate = (T.primaryKey.0 %== row[keyPath: T.primaryKey.0]) %&& (T.primaryKey.1 %== row[keyPath: T.primaryKey.1])
 		try delete(predicate)
 	}
+	func save<S: Sequence>(changeSets: S) throws where S.Element: ChangeSetProtocol{
+		for changeSet in changeSets {
+			try changeSet.saveDeleted(connection: self)
+		}
+		for changeSet in changeSets {
+			try changeSet.saveNew(connection: self)
+		}
+		for changeSet in changeSets {
+			try changeSet.saveUpdated(connection: self)
+		}
+	}
 }
 
 public class Transaction {

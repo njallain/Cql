@@ -7,7 +7,12 @@
 
 import Foundation
 
-public protocol RowChangeSet {
+public protocol ChangeSetProtocol {
+	func saveNew(connection: StorageConnection) throws
+	func saveUpdated(connection: StorageConnection) throws
+	func saveDeleted(connection: StorageConnection) throws
+}
+public protocol RowChangeSet: ChangeSetProtocol {
 	associatedtype T: Codable
 	mutating func new(initFn: (inout T) -> Void) -> T
 	mutating func updated(_ row: T)
@@ -16,6 +21,12 @@ public protocol RowChangeSet {
 	var newRows: [T] {get}
 	var updatedRows: [T] {get}
 	var deletedRows: [T] {get}
+}
+
+public extension RowChangeSet {
+	func saveNew(connection: StorageConnection) throws {
+		try connection.insert(newRows)
+	}
 }
 
 public class ChangeSet<T: PrimaryKeyTable>: RowChangeSet {
@@ -52,6 +63,12 @@ public class ChangeSet<T: PrimaryKeyTable>: RowChangeSet {
 		created.removeValue(forKey: key)
 		updated.removeValue(forKey: key)
 		deleted[key] = row
+	}
+	public func saveUpdated(connection: StorageConnection) throws {
+		try connection.update(self.updatedRows)
+	}
+	public func saveDeleted(connection: StorageConnection) throws {
+		for row in deletedRows { try connection.delete(row) }
 	}
 }
 
@@ -90,4 +107,12 @@ public class ChangeSet2<T: PrimaryKeyTable2>: RowChangeSet {
 		updated.removeValue(forKey: key)
 		deleted[key] = row
 	}
+
+	public func saveUpdated(connection: StorageConnection) throws {
+		try connection.update(self.updatedRows)
+	}
+	public func saveDeleted(connection: StorageConnection) throws {
+		for row in deletedRows { try connection.delete(row) }
+	}
 }
+
