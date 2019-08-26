@@ -21,12 +21,14 @@ public protocol Storage {
 	Will return nil in cases where the schema isn't defined
 	*/
 	func schema<T: Codable>(for tableType: T.Type) -> TableSchema<T>
+	func keyAllocator<T: PrimaryKeyTable>(for type: T.Type) -> AnyKeyAllocator<T.Key>
 }
 
 /**
 A connection to a given storage through which objects can be found, added, removed and updated
 */
 public protocol StorageConnection {
+	var storage: Storage {get}
 	func beginTransaction() throws -> Transaction
 	func insert<T: Codable>(_ row: T) throws
 	func insert<T: Codable>(_ rows: [T]) throws
@@ -126,3 +128,4 @@ public class Transaction {
 		}
 	}
 }
+

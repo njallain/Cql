@@ -28,6 +28,7 @@ Protocol to implement if the table has a single primary key
 */
 public protocol PrimaryKeyTable: SqlTableRepresentable {
 	associatedtype Key: SqlComparable
+	static func keyAllocator(_ connection: StorageConnection) throws -> AnyKeyAllocator<Key>
 	static var primaryKey: WritableKeyPath<Self, Key> {get}
 }
 

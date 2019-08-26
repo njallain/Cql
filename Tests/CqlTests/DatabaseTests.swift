@@ -294,6 +294,7 @@ class DatabaseTests: SqiliteTestCase {
 			try conn.insert([o, o2])
 			try conn.insert([child1, child2, child3, child4])
 			try txn.commit()
+			
 			let pred = \OptChild.parentId %== 7
 			let order = Order(by: \OptChild.id)
 			let query = Query(predicate: pred, order: order)
@@ -303,6 +304,10 @@ class DatabaseTests: SqiliteTestCase {
 				XCTAssertEqual(1, results[0].id)
 				XCTAssertEqual(3, results[1].id)
 			}
+			let parentsPred = KeyedFoo.optChildren.in(\OptChild.name %== "o1_8")
+			let parents = try conn.find(Query(predicate: parentsPred))
+			XCTAssertEqual(1, parents.count)
+			XCTAssertEqual(8, parents.first?.id)
 		} catch {
 			XCTFail(error.localizedDescription)
 		}
@@ -339,8 +344,10 @@ class DatabaseTests: SqiliteTestCase {
 		do {
 			let db = try openTestDatabase()
 			let conn = try db.open()
-			let o = KeyedFoo(id: try conn.nextId(KeyedFoo.self), name: "my name", description: "desc", senum: .val2, nenum: .val2)
-			let o2 = KeyedFoo(id: try conn.nextId(KeyedFoo.self), name: "foo2", description: "desc", senum: .val1, nenum: nil)
+			
+			let allocator = db.keyAllocator(for: KeyedFoo.self)
+			let o = KeyedFoo(id: allocator.next(), name: "my name", description: "desc", senum: .val2, nenum: .val2)
+			let o2 = KeyedFoo(id: allocator.next(), name: "foo2", description: "desc", senum: .val1, nenum: nil)
 			XCTAssertEqual(1, o.id)
 			XCTAssertEqual(2, o2.id)
 			try conn.insert([o, o2])
@@ -360,8 +367,9 @@ class DatabaseTests: SqiliteTestCase {
 			let conn = try db.open()
 			let oFirst = KeyedFoo(id: 1, name: "initial", description: "desc", senum: .val2, nenum: .val2)
 			try conn.insert(oFirst)
-			let o = KeyedFoo(id: try conn.nextId(KeyedFoo.self), name: "my name", description: "desc", senum: .val2, nenum: .val2)
-			let o2 = KeyedFoo(id: try conn.nextId(KeyedFoo.self), name: "foo2", description: "desc", senum: .val1, nenum: nil)
+			let allocator = db.keyAllocator(for: KeyedFoo.self)
+			let o = KeyedFoo(id: allocator.next(), name: "my name", description: "desc", senum: .val2, nenum: .val2)
+			let o2 = KeyedFoo(id: allocator.next(), name: "foo2", description: "desc", senum: .val1, nenum: nil)
 			XCTAssertEqual(2, o.id)
 			XCTAssertEqual(3, o2.id)
 			try conn.insert([o, o2])

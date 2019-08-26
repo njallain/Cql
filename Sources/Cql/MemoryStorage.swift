@@ -9,8 +9,9 @@
 import Foundation
 
 public class MemoryStorage: Storage {
+	
 	private var allRows: [String: [Any]] = [:]
-	fileprivate var nextIds: [String: Int] = [:]
+	private var keyAllocators = [String: Any]()
 	public init() {
 		
 	}
@@ -37,12 +38,24 @@ public class MemoryStorage: Storage {
 		let key = String(describing: T.self)
 		allRows[key] = rows
 	}
+	public func keyAllocator<T>(for type: T.Type) -> AnyKeyAllocator<T.Key> where T : PrimaryKeyTable {
+		let tkey = String(describing: T.self)
+		if let allocator = keyAllocators[tkey] {
+			return allocator as! AnyKeyAllocator<T.Key>
+		}
+		let conn = try! self.open()
+		let allocator = try! type.keyAllocator(conn)
+		keyAllocators[tkey] = allocator
+		return allocator
+	}
 }
 
 public class MemoryConnection: StorageConnection {
-	private let storage: MemoryStorage
+	private weak var _storage: MemoryStorage?
+	private var mem: MemoryStorage { _storage! }
+	public var storage: Storage { self._storage! }
 	init(storage: MemoryStorage) {
-		self.storage = storage
+		self._storage = storage
 	}
 	
 	public func beginTransaction() throws -> Transaction {
@@ -53,13 +66,13 @@ public class MemoryConnection: StorageConnection {
 	}
 	
 	public func insert<T: Codable>(_ rows: [T]) throws {
-		let existing = storage.rows(T.self)
-		storage.set(rows: rows + existing)
+		let existing = mem.rows(T.self)
+		mem.set(rows: rows + existing)
 	}
 	
 	public func update<T: Codable>(where predicate: Predicate<T>, set: (inout T) -> Void) throws {
-		let eval = PredicateEvaluator<T>(storage: self.storage)
-		let rows: [T] = storage.rows(T.self)
+		let eval = PredicateEvaluator<T>(storage: self.mem)
+		let rows: [T] = mem.rows(T.self)
 //		let newRows = rows.map({ row in
 //			if predicate.evaluate(evaluator: eval, row) {
 //				var v = row
@@ -78,11 +91,11 @@ public class MemoryConnection: StorageConnection {
 				newRows.append(row)
 			}
 		}
-		storage.set(rows: newRows)
+		mem.set(rows: newRows)
 	}
 	public func update<T: PrimaryKeyTable>(_ rows: [T]) throws {
 		let updatesById = Dictionary(grouping: rows, by: {$0[keyPath: T.primaryKey]})
-		let rows = storage.rows(T.self)
+		let rows = mem.rows(T.self)
 		var newRows = [T]()
 		for row in rows {
 			if let updated = updatesById[row[keyPath: T.primaryKey]]?.first {
@@ -91,11 +104,11 @@ public class MemoryConnection: StorageConnection {
 				newRows.append(row)
 			}
 		}
-		storage.set(rows: newRows)
+		mem.set(rows: newRows)
 	}
 	public func update<T: PrimaryKeyTable2>(_ rows: [T]) throws {
 		let updatesById = Dictionary(grouping: rows, by: {$0.primaryKeys})
-		let rows = storage.rows(T.self)
+		let rows = mem.rows(T.self)
 		var newRows = [T]()
 		for row in rows {
 			if let updated = updatesById[row.primaryKeys]?.first {
@@ -104,16 +117,16 @@ public class MemoryConnection: StorageConnection {
 				newRows.append(row)
 			}
 		}
-		storage.set(rows: newRows)
+		mem.set(rows: newRows)
 	}
 
 	public func delete<T: Codable>(_ predicate: Predicate<T>) throws {
-		let eval = PredicateEvaluator<T>(storage: self.storage)
-		let rows = storage.rows(T.self).filter { !predicate.evaluate(evaluator: eval, $0) }
-		storage.set(rows: rows)
+		let eval = PredicateEvaluator<T>(storage: self.mem)
+		let rows = mem.rows(T.self).filter { !predicate.evaluate(evaluator: eval, $0) }
+		mem.set(rows: rows)
 	}
 	public func fetch<T: Codable>(query: Query<T>, results: ([T]) -> Bool) throws {
-		let eval = PredicateEvaluator<T>(storage: self.storage)
+		let eval = PredicateEvaluator<T>(storage: self.mem)
 		var partialResults = [T]()
 		var all = eval.findAll(query.predicate)
 		if let order = query.order {
@@ -132,8 +145,8 @@ public class MemoryConnection: StorageConnection {
 	}
 	
 	public func fetch<T: AnyJoin>(query: JoinedQuery<T>, results: ([T]) -> Bool) throws {
-		let leftEval = PredicateEvaluator<T.Left>(storage: self.storage)
-		let rightEval = PredicateEvaluator<T.Right>(storage: self.storage)
+		let leftEval = PredicateEvaluator<T.Left>(storage: self.mem)
+		let rightEval = PredicateEvaluator<T.Right>(storage: self.mem)
 		let leftObjs = leftEval.findAll(query.predicate.leftPredicate)
 		let rightObjs = rightEval.findAll(query.predicate.rightPredicate)
 		
@@ -166,16 +179,8 @@ public class MemoryConnection: StorageConnection {
 	}
 	
 	public func nextId<T>(_ type: T.Type) throws -> Int where T : PrimaryKeyTable, T.Key == Int {
-		let key = String(describing: type)
-		if let id = storage.nextIds[key] {
-			storage.nextIds[key] = id + 1
-			return id
-		} else {
-			let maxId = storage.rows(type).map({$0[keyPath: type.primaryKey]}).max() ?? 0
-			storage.nextIds[key] = maxId + 2
-			return maxId + 1
-		}
-		//return try self.database.nextId(type, connection: self)
+		let maxId = mem.rows(type).map({$0[keyPath: type.primaryKey]}).max() ?? 0
+		return maxId + 1
 	}
 }
 

@@ -78,8 +78,8 @@ public class Database: Storage {
 	private let provider: DatabaseProvider
 	private var verifiedSchema = false
 	public let url: URL
-	fileprivate var nextIds: [String: Int] = [:]
 	private let version: String
+	private var keyAllocators = [String: Any]()
 	/**
 	Initializes a new database without any kind of connection to that database.
 	- parameters:
@@ -178,16 +178,32 @@ public class Database: Storage {
 		}
 	}
 	
+	public func keyAllocator<T>(for type: T.Type) -> AnyKeyAllocator<T.Key> where T : PrimaryKeyTable {
+		let name = Database.tableName(of: type)
+		if let allocator = keyAllocators[name] {
+			return allocator as! AnyKeyAllocator<T.Key>
+		}
+		do {
+			let conn = try self.open()
+			let allocator = try type.keyAllocator(conn)
+			keyAllocators[name] = allocator
+			return allocator
+		} catch {
+			fatalError(error.localizedDescription)
+		}
+	}
 }
 
 
 public class SqlConnection: StorageConnection {
-	private let database: Database
+	private weak var _database: Database?
+	private var database: Database { self._database! }
+	public var storage: Storage { self._database! }
 	private let driver: SqlDriver
 	private var insertStatementCache = [String: String]()
 	
 	fileprivate init(database: Database, driver: SqlDriver) {
-		self.database = database
+		self._database = database
 		self.driver = driver
 	}
 	
@@ -302,26 +318,17 @@ public class SqlConnection: StorageConnection {
 	
 	public func nextId<T>(_ type: T.Type) throws -> Int where T : PrimaryKeyTable, T.Key == Int {
 		let schema = database.schema(for: type)
-		if let id = database.nextIds[schema.name] {
-			database.nextIds[schema.name] = id + 1
-			return id
-		} else {
-			let sql = "select max(\(schema.primaryKey[0])) as maxId from \(schema.name)"
-			let cursor = try driver.query(sql: sql, bind: ["maxId"], arguments: [])
-			if let reader = try cursor.next() {
-				if let n = try reader.getNullableInt(name: "maxId") {
-					database.nextIds[schema.name] = n + 2
-					return n + 1
-				} else {
-					database.nextIds[schema.name] = 2
-					return 1
-				}
+		let sql = "select max(\(schema.primaryKey[0])) as maxId from \(schema.name)"
+		let cursor = try driver.query(sql: sql, bind: ["maxId"], arguments: [])
+		if let reader = try cursor.next() {
+			if let n = try reader.getNullableInt(name: "maxId") {
+				return n + 1
 			} else {
-				database.nextIds[schema.name] = 2
 				return 1
 			}
+		} else {
+			return 1
 		}
-		//return try self.database.nextId(type, connection: self)
 	}
 }
 

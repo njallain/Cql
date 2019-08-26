@@ -223,7 +223,7 @@ class PerformanceTests: XCTestCase {
 		}
 	}
 	private func createMedium(_ conn: StorageConnection) -> MediumIntId {
-		let i = try! conn.nextId(MediumIntId.self)
+		let i = conn.storage.keyAllocator(for: MediumIntId.self).next()
 		return MediumIntId(
 			id: i,
 			title: "object \(i)",
