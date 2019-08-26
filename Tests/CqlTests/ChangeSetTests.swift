@@ -17,10 +17,13 @@ class ChangeSetTests: XCTestCase {
 	}
 	
 	func testNew() {
-		do {
-			
-		} catch {
-			XCTFail(error.localizedDescription)
+		let changeSet = storage.changeSet(for: AllTable.self)
+		var row = changeSet.new {
+			$0.s = "test"
 		}
+		row.n = 5
+		changeSet.updated(row)
+		XCTAssertEqual(1, changeSet.newRows.count)
+		XCTAssertEqual(0, changeSet.updatedRows.count)
 	}
 }

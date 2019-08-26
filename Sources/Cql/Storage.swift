@@ -24,6 +24,14 @@ public protocol Storage {
 	func keyAllocator<T: PrimaryKeyTable>(for type: T.Type) -> AnyKeyAllocator<T.Key>
 }
 
+public extension Storage {
+	func changeSet<T: PrimaryKeyTable>(for: T.Type) -> ChangeSet<T> {
+		return ChangeSet(self.keyAllocator(for: T.self))
+	}
+	func changeSet<T: PrimaryKeyTable2>(for: T.Type) -> ChangeSet2<T> {
+		return ChangeSet2()
+	}
+}
 /**
 A connection to a given storage through which objects can be found, added, removed and updated
 */
