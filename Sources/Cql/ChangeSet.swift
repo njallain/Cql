@@ -7,6 +7,10 @@
 
 import Foundation
 
+
+public protocol Storable {
+	func save(to connection: StorageConnection) throws
+}
 public protocol ChangeSetProtocol {
 	func saveNew(connection: StorageConnection) throws
 	func saveUpdated(connection: StorageConnection) throws
