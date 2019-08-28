@@ -45,6 +45,7 @@ public class ChangeSet<T: PrimaryKeyTable>: RowChangeSet {
 	public var updatedRows: [T] { Array(updated.values) }
 	public var deletedRows: [T] { Array(deleted.values) }
 	
+	@discardableResult
 	public func new(initFn: (inout T) -> Void) -> T {
 		var row = T()
 		let key = keyAllocator.next()
@@ -90,6 +91,7 @@ public class ChangeSet2<T: PrimaryKeyTable2>: RowChangeSet {
 	public var updatedRows: [T] { Array(updated.values) }
 	public var deletedRows: [T] { Array(deleted.values) }
 	
+	@discardableResult
 	public func new(initFn: (inout T) -> Void) -> T {
 		var row = T()
 		initFn(&row)
