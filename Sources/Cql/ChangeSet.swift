@@ -122,3 +122,8 @@ public class ChangeSet2<T: PrimaryKeyTable2>: RowChangeSet {
 	}
 }
 
+public protocol ChangeSetSource {
+	func changeSet<T: PrimaryKeyTable>(for type: T.Type) -> ChangeSet<T>
+	func changeSet<T: PrimaryKeyTable2>(for type: T.Type) -> ChangeSet2<T>
+}
+

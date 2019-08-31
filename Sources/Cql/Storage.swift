@@ -11,7 +11,7 @@ import Foundation
 /**
 Indicates a single place where any codable objects are stored
 */
-public protocol Storage {
+public protocol Storage: ChangeSetSource {
 	/**
 	Opens a connection to the storage.  All reading/writing must be done through a connection
 	*/
@@ -32,6 +32,7 @@ public extension Storage {
 		return ChangeSet2()
 	}
 }
+
 /**
 A connection to a given storage through which objects can be found, added, removed and updated
 */

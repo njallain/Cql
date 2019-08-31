@@ -88,6 +88,7 @@ class ChangeSetTests: XCTestCase {
 			XCTFail(error.localizedDescription)
 		}
 	}
+	
 }
 
 fileprivate class TestChangeSet {
