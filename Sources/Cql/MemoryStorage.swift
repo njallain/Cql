@@ -27,6 +27,14 @@ public class MemoryStorage: Storage {
 	public func delete() throws {
 	}
 
+	public func printDebugContents() {
+		for (k, rows) in allRows {
+			print("\(k) (\(rows) rows)")
+			for row in rows {
+				print(String(reflecting: row))
+			}
+		}
+	}
 	func rows<T: Codable>(_ type: T.Type) -> [T] {
 		let key = String(describing: type)
 		if let rows = allRows[key] {
