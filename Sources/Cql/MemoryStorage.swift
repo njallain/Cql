@@ -29,7 +29,7 @@ public class MemoryStorage: Storage {
 
 	public func printDebugContents() {
 		for (k, rows) in allRows {
-			print("\(k) (\(rows) rows)")
+			print("\(k) (\(rows.count) rows)")
 			for row in rows {
 				print(String(reflecting: row))
 			}
