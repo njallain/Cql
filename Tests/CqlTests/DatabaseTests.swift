@@ -417,7 +417,7 @@ fileprivate struct Foo: Codable {
 	var description: String? = nil
 }
 
-fileprivate struct KeyedFoo: PrimaryKeyTable, Codable {
+fileprivate struct KeyedFoo: CqlPrimaryKeyTable, Codable {
 	var id: Int = 0
 	var name: String = ""
 	var description: String? = nil
@@ -429,7 +429,7 @@ fileprivate struct KeyedFoo: PrimaryKeyTable, Codable {
 	static let optChildren = toMany(\OptChild.parentId)
 }
 
-fileprivate struct OptChild: PrimaryKeyTable {
+fileprivate struct OptChild: CqlPrimaryKeyTable {
 	var id: Int = 0
 	var parentId: Int? = nil
 	var name: String = ""
@@ -437,18 +437,18 @@ fileprivate struct OptChild: PrimaryKeyTable {
 	static let parent = toOne(KeyedFoo.self, \.parentId)
 	static let foreignKeys = [parent]
 }
-fileprivate struct DoubleKeyed: PrimaryKeyTable2 {
+fileprivate struct DoubleKeyed: CqlPrimaryKeyTable2 {
 	var leftId: Int = 0
 	var rightId: Int = 0
 	var name = ""
 	static let primaryKey = (\DoubleKeyed.leftId, \DoubleKeyed.rightId)
 }
 
-fileprivate struct FooChild: SqlTableRepresentable {
+fileprivate struct FooChild: CqlTableRepresentable {
 	var fooId: Int = 0
 	var name = ""
 	static let parent = toOne(KeyedFoo.self, \.fooId)
-	static let foreignKeys: [ForeignKeyRelation] = [parent]
+	static let foreignKeys: [CqlForeignKeyRelation] = [parent]
 }
 
 fileprivate struct ParentChild: SqlJoin {

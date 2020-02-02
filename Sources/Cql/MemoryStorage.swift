@@ -46,7 +46,7 @@ public class MemoryStorage: Storage {
 		let key = String(describing: T.self)
 		allRows[key] = rows
 	}
-	public func keyAllocator<T>(for type: T.Type) -> AnyKeyAllocator<T.Key> where T : PrimaryKeyTable {
+	public func keyAllocator<T>(for type: T.Type) -> AnyKeyAllocator<T.Key> where T : CqlPrimaryKeyTable {
 		let tkey = String(describing: T.self)
 		if let allocator = keyAllocators[tkey] {
 			return allocator as! AnyKeyAllocator<T.Key>
@@ -101,7 +101,7 @@ public class MemoryConnection: StorageConnection {
 		}
 		mem.set(rows: newRows)
 	}
-	public func update<T: PrimaryKeyTable>(_ rows: [T]) throws {
+	public func update<T: CqlPrimaryKeyTable>(_ rows: [T]) throws {
 		let updatesById = Dictionary(grouping: rows, by: {$0[keyPath: T.primaryKey]})
 		let rows = mem.rows(T.self)
 		var newRows = [T]()
@@ -114,7 +114,7 @@ public class MemoryConnection: StorageConnection {
 		}
 		mem.set(rows: newRows)
 	}
-	public func update<T: PrimaryKeyTable2>(_ rows: [T]) throws {
+	public func update<T: CqlPrimaryKeyTable2>(_ rows: [T]) throws {
 		let updatesById = Dictionary(grouping: rows, by: {$0.primaryKeys})
 		let rows = mem.rows(T.self)
 		var newRows = [T]()
@@ -186,7 +186,7 @@ public class MemoryConnection: StorageConnection {
 		}
 	}
 	
-	public func nextId<T>(_ type: T.Type) throws -> Int where T : PrimaryKeyTable, T.Key == Int {
+	public func nextId<T>(_ type: T.Type) throws -> Int where T : CqlPrimaryKeyTable, T.Key == Int {
 		let maxId = mem.rows(type).map({$0[keyPath: type.primaryKey]}).max() ?? 0
 		return maxId + 1
 	}

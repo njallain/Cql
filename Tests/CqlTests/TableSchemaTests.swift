@@ -86,7 +86,7 @@ class TableSchemaTests: XCTestCase {
 }
 
 
-fileprivate struct IndexedObj: Codable, PrimaryKeyTable {
+fileprivate struct IndexedObj: Codable, CqlPrimaryKeyTable {
 	var id: Int = 0
 	var s: String = ""
 	var a: Int = 0
@@ -100,7 +100,7 @@ fileprivate struct IndexedObj: Codable, PrimaryKeyTable {
 	]
 }
 
-fileprivate struct DoubleKey: Codable, PrimaryKeyTable2 {
+fileprivate struct DoubleKey: Codable, CqlPrimaryKeyTable2 {
 	var id1: Int = 0
 	var id2: String = ""
 	var n: String = ""
@@ -108,17 +108,17 @@ fileprivate struct DoubleKey: Codable, PrimaryKeyTable2 {
 	static let primaryKey = (\DoubleKey.id1, \DoubleKey.id2)
 }
 
-fileprivate struct Parent: PrimaryKeyTable {
+fileprivate struct Parent: CqlPrimaryKeyTable {
 	var id: Int = 0
 	var name: String = ""
 	
 	static let primaryKey = \Parent.id
 }
 
-fileprivate struct FkObj: SqlTableRepresentable {
+fileprivate struct FkObj: CqlTableRepresentable {
 	var t: String = ""
 	var indexedId: Int = 0
 	
 	static let parent = toOne(Parent.self, \.indexedId)
-	static let foreignKeys: [ForeignKeyRelation] = [parent]
+	static let foreignKeys: [CqlForeignKeyRelation] = [parent]
 }

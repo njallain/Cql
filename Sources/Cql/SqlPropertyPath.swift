@@ -44,7 +44,7 @@ enum SqlPropertyPath {
 	- encode the instance again and determine what property changed
 	This will only work properly on flat objects with SqlConvertible properties
 	*/
-	static func path<T: SqlTableRepresentable, V: SqlConvertible>(_ row: T, keyPath: WritableKeyPath<T, V>) -> String? {
+	static func path<T: CqlTableRepresentable, V: SqlConvertible>(_ row: T, keyPath: WritableKeyPath<T, V>) -> String? {
 		return path(T.sqlCoder, row, keyPath: keyPath)
 	}
 	
@@ -56,7 +56,7 @@ enum SqlPropertyPath {
 	- encode the instance again and determine what property changed
 	This will only work properly on flat objects with SqlConvertible properties
 	*/
-	static func path<T: SqlTableRepresentable, V: SqlConvertible>(_ row: T, keyPath: WritableKeyPath<T, V?>) -> String? {
+	static func path<T: CqlTableRepresentable, V: SqlConvertible>(_ row: T, keyPath: WritableKeyPath<T, V?>) -> String? {
 		return path(T.sqlCoder, row, keyPath: keyPath)
 	}
 	

@@ -140,7 +140,7 @@ class SchemaMigrationTests: XCTestCase {
 			XCTFail("incorrect diff: \(diffs[0])")
 		}
 	}
-	private func compare<Old: SqlTableRepresentable, New: SqlTableRepresentable>(_ oldSchema: Old.Type, _ newSchema: New.Type) -> [SchemaTableDifference] {
+	private func compare<Old: CqlTableRepresentable, New: CqlTableRepresentable>(_ oldSchema: Old.Type, _ newSchema: New.Type) -> [SchemaTableDifference] {
 		return SchemaTableDifference.compare(differ: DatabaseProvider.sqlite, existing: oldSchema.buildSchema(), expected: newSchema.buildSchema())
 
 	}
