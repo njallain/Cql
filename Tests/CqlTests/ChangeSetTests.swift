@@ -92,9 +92,9 @@ class ChangeSetTests: XCTestCase {
 }
 
 fileprivate class TestChangeSet {
-	let all: ChangeSet<AllTable>
-	let join: ChangeSet2<JoinTable>
-	let child: ChangeSet<ChildTable>
+	let all: Cql.ChangeSet<AllTable>
+	let join: Cql.ChangeSet2<JoinTable>
+	let child: Cql.ChangeSet<ChildTable>
 	
 	init(storage: Storage) {
 		all = storage.changeSet(for: AllTable.self)

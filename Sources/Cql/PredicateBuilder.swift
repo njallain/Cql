@@ -53,7 +53,7 @@ public extension Predicate {
 	}
 }
 
-public extension Cql.RelationToOptionalMany {
+public extension RelationToOptionalMany {
 	func `in`(_ predicate: Predicate<Target>) -> Predicate<Source> {
 		//let oldPredicate = Predicate.all(Target.self).append(predicate)
 		let subPred = AnySubPredicate(OptionalSubPredicate(selectProperty: self.keyPath, predicate: predicate))
@@ -62,7 +62,7 @@ public extension Cql.RelationToOptionalMany {
 	}
 }
 
-public extension Cql.RelationToMany {
+public extension RelationToMany {
 	func `in`(_ predicate: Predicate<Target>) -> Predicate<Source> {
 		//let oldPredicate = Predicate.all(Target.self).append(predicate)
 		let subPred = AnySubPredicate(SubPredicate(selectProperty: self.keyPath, predicate: predicate))
@@ -72,7 +72,7 @@ public extension Cql.RelationToMany {
 }
 
 
-public extension Cql.RelationToOne {
+public extension RelationToOne {
 	func `in`(_ predicate: Predicate<Target>) -> Predicate<Source> {
 		//let oldPredicate = Predicate.all(Target.self).append(predicate)
 		let subPred = AnySubPredicate(SubPredicate(selectProperty: Target.primaryKey, predicate: predicate))

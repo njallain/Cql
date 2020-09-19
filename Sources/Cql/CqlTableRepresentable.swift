@@ -41,14 +41,12 @@ public protocol CqlPrimaryKeyTable2: CqlTableRepresentable {
 	static var primaryKey: (WritableKeyPath<Self, Key1>, WritableKeyPath<Self, Key2>) {get}
 }
 
-public extension Cql {
-	struct JoinKey<L: SqlComparable, R: SqlComparable>: Hashable {
-		public var leftKey: L
-		public var rightKey: R
-	}
+public struct JoinKey<L: SqlComparable, R: SqlComparable>: Hashable {
+	public var leftKey: L
+	public var rightKey: R
 }
 public extension CqlPrimaryKeyTable2 {
-	var primaryKeys: Cql.JoinKey<Key1, Key2> { Cql.JoinKey(leftKey: self[keyPath: Self.primaryKey.0], rightKey: self[keyPath: Self.primaryKey.1]) }
+	var primaryKeys: JoinKey<Key1, Key2> { JoinKey(leftKey: self[keyPath: Self.primaryKey.0], rightKey: self[keyPath: Self.primaryKey.1]) }
 }
 public extension CqlTableRepresentable {
 	static var sqlCoder: SqlCoder<Self> { SqlCoder<Self>() }
@@ -101,44 +99,42 @@ fileprivate func buildBaseSchema<T: CqlTableRepresentable>(_ type: T.Type) -> Ta
 public protocol CqlForeignKeyRelation {
 	func buildForeignKey() -> ForeignKey
 }
-public extension Cql {
-	struct RelationToOne<Source: Codable, Target: CqlPrimaryKeyTable> {
-		let keyPath: WritableKeyPath<Source, Target.Key>
-		public let join: JoinProperty<Source, Target, Target.Key>
-		init(_ target: Target.Type, _ keyPath: WritableKeyPath<Source, Target.Key>) {
-			self.keyPath = keyPath
-			self.join = JoinProperty(left: keyPath, right: Target.primaryKey)
-		}
-	}
-
-	struct RelationToOptionalOne<Source: Codable, Target: CqlPrimaryKeyTable> {
-		let keyPath: WritableKeyPath<Source, Target.Key?>
-		//public let join: OptionalJoinProperty<Source, Target, Target.Key>
-		init(_ target: Target.Type, _ keyPath: WritableKeyPath<Source, Target.Key?>) {
-			self.keyPath = keyPath
-	//		self.join = OptionalJoinProperty(left: keyPath, right: Target.primaryKey)
-		}
-	}
-
-	struct RelationToMany<Source: CqlPrimaryKeyTable, Target: Codable> {
-		let keyPath: WritableKeyPath<Target, Source.Key>
-		public let join: JoinProperty<Source, Target, Source.Key>
-		init(_ keyPath: WritableKeyPath<Target, Source.Key>, _ target: Target.Type) {
-			self.keyPath = keyPath
-			self.join = JoinProperty(left: Source.primaryKey, right: keyPath)
-		}
-	}
-
-	struct RelationToOptionalMany<Source: CqlPrimaryKeyTable, Target: Codable> {
-		let keyPath: WritableKeyPath<Target, Source.Key?>
-		public let join: OptionalJoinProperty<Source, Target, Source.Key>
-		init(_ keyPath: WritableKeyPath<Target, Source.Key?>, _ target: Target.Type) {
-			self.keyPath = keyPath
-			self.join = OptionalJoinProperty(left: Source.primaryKey, right: keyPath)
-		}
+public struct RelationToOne<Source: Codable, Target: CqlPrimaryKeyTable> {
+	let keyPath: WritableKeyPath<Source, Target.Key>
+	public let join: JoinProperty<Source, Target, Target.Key>
+	init(_ target: Target.Type, _ keyPath: WritableKeyPath<Source, Target.Key>) {
+		self.keyPath = keyPath
+		self.join = JoinProperty(left: keyPath, right: Target.primaryKey)
 	}
 }
-extension Cql.RelationToOne: CqlForeignKeyRelation where Source: CqlTableRepresentable {
+
+public struct RelationToOptionalOne<Source: Codable, Target: CqlPrimaryKeyTable> {
+	let keyPath: WritableKeyPath<Source, Target.Key?>
+	//public let join: OptionalJoinProperty<Source, Target, Target.Key>
+	init(_ target: Target.Type, _ keyPath: WritableKeyPath<Source, Target.Key?>) {
+		self.keyPath = keyPath
+//		self.join = OptionalJoinProperty(left: keyPath, right: Target.primaryKey)
+	}
+}
+
+public struct RelationToMany<Source: CqlPrimaryKeyTable, Target: Codable> {
+	let keyPath: WritableKeyPath<Target, Source.Key>
+	public let join: JoinProperty<Source, Target, Source.Key>
+	init(_ keyPath: WritableKeyPath<Target, Source.Key>, _ target: Target.Type) {
+		self.keyPath = keyPath
+		self.join = JoinProperty(left: Source.primaryKey, right: keyPath)
+	}
+}
+
+public struct RelationToOptionalMany<Source: CqlPrimaryKeyTable, Target: Codable> {
+	let keyPath: WritableKeyPath<Target, Source.Key?>
+	public let join: OptionalJoinProperty<Source, Target, Source.Key>
+	init(_ keyPath: WritableKeyPath<Target, Source.Key?>, _ target: Target.Type) {
+		self.keyPath = keyPath
+		self.join = OptionalJoinProperty(left: Source.primaryKey, right: keyPath)
+	}
+}
+extension RelationToOne: CqlForeignKeyRelation where Source: CqlTableRepresentable {
 	public func buildForeignKey() -> ForeignKey {
 		guard let keyName = SqlPropertyPath.path(Source(), keyPath: self.keyPath),
 			let pkName = SqlPropertyPath.path(Target(), keyPath: Target.primaryKey) else {
@@ -147,7 +143,7 @@ extension Cql.RelationToOne: CqlForeignKeyRelation where Source: CqlTableReprese
 		return ForeignKey(columnName: keyName, foreignTable: String(describing:Target.self), foreignColumn: pkName)
 	}
 }
-extension Cql.RelationToOptionalOne: CqlForeignKeyRelation where Source: CqlTableRepresentable {
+extension RelationToOptionalOne: CqlForeignKeyRelation where Source: CqlTableRepresentable {
 	public func buildForeignKey() -> ForeignKey {
 		guard let keyName = SqlPropertyPath.path(Source(), keyPath: self.keyPath),
 			let pkName = SqlPropertyPath.path(Target(), keyPath: Target.primaryKey) else {
@@ -159,21 +155,21 @@ extension Cql.RelationToOptionalOne: CqlForeignKeyRelation where Source: CqlTabl
 
 
 public extension CqlPrimaryKeyTable {
-	static func toMany<Target: Codable>(_ keyPath: WritableKeyPath<Target, Key>) -> Cql.RelationToMany<Self, Target> {
-		return Cql.RelationToMany(keyPath, Target.self)
+	static func toMany<Target: Codable>(_ keyPath: WritableKeyPath<Target, Key>) -> RelationToMany<Self, Target> {
+		return RelationToMany(keyPath, Target.self)
 	}
-	static func toMany<Target: Codable>(_ keyPath: WritableKeyPath<Target, Key?>) -> Cql.RelationToOptionalMany<Self, Target> {
-		return Cql.RelationToOptionalMany(keyPath, Target.self)
+	static func toMany<Target: Codable>(_ keyPath: WritableKeyPath<Target, Key?>) -> RelationToOptionalMany<Self, Target> {
+		return RelationToOptionalMany(keyPath, Target.self)
 	}
 }
 
 public extension Encodable where Self: Decodable {
-	static func toOne<Target: CqlPrimaryKeyTable>(_ target: Target.Type, _ keyPath: WritableKeyPath<Self, Target.Key>) -> Cql.RelationToOne<Self, Target> {
-		let relation = Cql.RelationToOne(target, keyPath)
+	static func toOne<Target: CqlPrimaryKeyTable>(_ target: Target.Type, _ keyPath: WritableKeyPath<Self, Target.Key>) -> RelationToOne<Self, Target> {
+		let relation = RelationToOne(target, keyPath)
 		return relation
 	}
-	static func toOne<Target: CqlPrimaryKeyTable>(_ target: Target.Type, _ keyPath: WritableKeyPath<Self, Target.Key?>) -> Cql.RelationToOptionalOne<Self, Target> {
-		let relation = Cql.RelationToOptionalOne(target, keyPath)
+	static func toOne<Target: CqlPrimaryKeyTable>(_ target: Target.Type, _ keyPath: WritableKeyPath<Self, Target.Key?>) -> RelationToOptionalOne<Self, Target> {
+		let relation = RelationToOptionalOne(target, keyPath)
 		return relation
 	}
 }

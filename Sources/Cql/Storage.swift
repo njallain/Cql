@@ -11,7 +11,7 @@ import Foundation
 /**
 Indicates a single place where any codable objects are stored
 */
-public protocol Storage: ChangeSetSource {
+public protocol Storage: CqlChangeSetSource {
 	/**
 	Opens a connection to the storage.  All reading/writing must be done through a connection
 	*/
@@ -26,10 +26,10 @@ public protocol Storage: ChangeSetSource {
 
 public extension Storage {
 	func changeSet<T: CqlPrimaryKeyTable>(for: T.Type) -> ChangeSet<T> {
-		return ChangeSet(self.keyAllocator(for: T.self))
+		return Cql.ChangeSet(self.keyAllocator(for: T.self))
 	}
 	func changeSet<T: CqlPrimaryKeyTable2>(for: T.Type) -> ChangeSet2<T> {
-		return ChangeSet2()
+		return Cql.ChangeSet2()
 	}
 }
 
@@ -104,7 +104,7 @@ public extension StorageConnection {
 		let predicate = (T.primaryKey.0 %== row[keyPath: T.primaryKey.0]) %&& (T.primaryKey.1 %== row[keyPath: T.primaryKey.1])
 		try delete(predicate)
 	}
-	func save(changeSets: ChangeSetProtocol...) throws {
+	func save(changeSets: CqlChangeSetProtocol...) throws {
 		for changeSet in changeSets.reversed() {
 			try changeSet.saveDeleted(connection: self)
 		}
