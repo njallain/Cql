@@ -90,7 +90,7 @@ class PredicateBuilderTests: XCTestCase {
 	}
 }
 
-fileprivate struct CheckMe: CqlPrimaryKeyTable {
+fileprivate struct CheckMe: SqlPrimaryKeyTable {
 	var str: String = ""
 	var n: Int = 0
 	var f: Double = 0

@@ -203,7 +203,7 @@ fileprivate enum ItemState: Int, SqlIntEnum {
 }
 
 // old schema
-fileprivate struct _Project: CqlPrimaryKeyTable {
+fileprivate struct _Project: SqlPrimaryKeyTable {
 	var id: Int = 0
 	var name = ""
 	var details = ""
@@ -211,7 +211,7 @@ fileprivate struct _Project: CqlPrimaryKeyTable {
 	static let items = toMany(\_Item.projectId)
 }
 
-fileprivate struct _Item: CqlPrimaryKeyTable {
+fileprivate struct _Item: SqlPrimaryKeyTable {
 	var id = 0
 	var title = ""
 	var projectId = 0
@@ -221,14 +221,14 @@ fileprivate struct _Item: CqlPrimaryKeyTable {
 	static let primaryKey = \_Item.id
 }
 
-fileprivate struct _Comment: CqlPrimaryKeyTable {
+fileprivate struct _Comment: SqlPrimaryKeyTable {
 	var id = UUID.defaultValue
 	var body = ""
 	var itemId = 0
 	static let item = toOne(_Item.self, \.itemId)
 	static let primaryKey = \_Comment.id
 }
-fileprivate struct OldAttachment: CqlPrimaryKeyTable {
+fileprivate struct OldAttachment: SqlPrimaryKeyTable {
 	var id = 0
 	var data = Data()
 	var contentType = ""
@@ -239,7 +239,7 @@ fileprivate struct OldAttachment: CqlPrimaryKeyTable {
 
 // new schema
 // rename column
-fileprivate struct Project: CqlPrimaryKeyTable {
+fileprivate struct Project: SqlPrimaryKeyTable {
 	var id: Int = 0
 	var title = ""	// renamed from name
 	var details = ""
@@ -248,7 +248,7 @@ fileprivate struct Project: CqlPrimaryKeyTable {
 }
 
 // new default
-fileprivate struct Item: CqlPrimaryKeyTable {
+fileprivate struct Item: SqlPrimaryKeyTable {
 	var id = 0
 	var title = ""
 	var position = Double(0)
@@ -257,7 +257,7 @@ fileprivate struct Item: CqlPrimaryKeyTable {
 }
 
 // introduce join
-fileprivate struct ProjectItem: CqlPrimaryKeyTable2 {
+fileprivate struct ProjectItem: SqlPrimaryKeyTable2 {
 	var projectId = 0
 	var itemId = 0
 	var position: Double = 0
@@ -265,7 +265,7 @@ fileprivate struct ProjectItem: CqlPrimaryKeyTable2 {
 }
 
 // rename table
-fileprivate struct Attachment: CqlPrimaryKeyTable{
+fileprivate struct Attachment: SqlPrimaryKeyTable{
 	var id = 0
 	var data = Data()
 	var contentType = ""
@@ -275,7 +275,7 @@ fileprivate struct Attachment: CqlPrimaryKeyTable{
 }
 
 // primary key change
-fileprivate struct Comment: CqlPrimaryKeyTable {
+fileprivate struct Comment: SqlPrimaryKeyTable {
 	var id = 0
 	var body = ""
 	var itemId = 0

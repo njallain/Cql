@@ -23,7 +23,7 @@ enum IntEnum: Int, SqlIntEnum {
 	case val2 = 2
 }
 
-struct AllTable : Codable, CqlPrimaryKeyTable {
+struct AllTable : Codable, SqlPrimaryKeyTable {
 	var id: UUID = UUID()
 	var nid: UUID? = nil
 	var n: Int = 0
@@ -52,7 +52,7 @@ struct AllTable : Codable, CqlPrimaryKeyTable {
 }
 
 
-struct JoinTable: CqlPrimaryKeyTable2 {
+struct JoinTable: SqlPrimaryKeyTable2 {
 	var allId: UUID = UUID()
 	var childId: Int = 0
 	var description: String = ""
@@ -63,7 +63,7 @@ struct JoinTable: CqlPrimaryKeyTable2 {
 	static let foreignKeys: [CqlForeignKeyRelation] = [parent, child]
 }
 
-struct ChildTable: CqlPrimaryKeyTable {
+struct ChildTable: SqlPrimaryKeyTable {
 	var id: Int = 0
 	var firstName: String = ""
 	var lastName: String = ""
@@ -72,8 +72,8 @@ struct ChildTable: CqlPrimaryKeyTable {
 	static let tableIndexes = [TableIndex(columnNames: ["firstName", "lastName"], isUnique: true)]
 }
 
-extension CqlTableRepresentable {
-	static func renamedSchema<T2: CqlTableRepresentable>(to newTable: T2.Type) -> TableSchemaProtocol {
+extension SqlTableRepresentable {
+	static func renamedSchema<T2: SqlTableRepresentable>(to newTable: T2.Type) -> TableSchemaProtocol {
 		let schema = self.buildSchema()
 		let newName = String(describing: newTable)
 		return UnknownTableSchema(

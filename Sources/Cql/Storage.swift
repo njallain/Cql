@@ -21,14 +21,14 @@ public protocol Storage: CqlChangeSetSource {
 	Will return nil in cases where the schema isn't defined
 	*/
 	func schema<T: Codable>(for tableType: T.Type) -> TableSchema<T>
-	func keyAllocator<T: CqlPrimaryKeyTable>(for type: T.Type) -> AnyKeyAllocator<T.Key>
+	func keyAllocator<T: SqlPrimaryKeyTable>(for type: T.Type) -> AnyKeyAllocator<T.Key>
 }
 
 public extension Storage {
-	func changeSet<T: CqlPrimaryKeyTable>(for: T.Type) -> ChangeSet<T> {
+	func changeSet<T: SqlPrimaryKeyTable>(for: T.Type) -> ChangeSet<T> {
 		return Cql.ChangeSet(self.keyAllocator(for: T.self))
 	}
-	func changeSet<T: CqlPrimaryKeyTable2>(for: T.Type) -> ChangeSet2<T> {
+	func changeSet<T: SqlPrimaryKeyTable2>(for: T.Type) -> ChangeSet2<T> {
 		return Cql.ChangeSet2()
 	}
 }
@@ -43,16 +43,16 @@ public protocol StorageConnection {
 	func insert<T: Codable>(_ rows: [T]) throws
 	
 	func update<T: Codable>(where: Predicate<T>, set: (inout T) -> Void) throws
-	func update<T: CqlPrimaryKeyTable>(_ row: T) throws
-	func update<T: CqlPrimaryKeyTable>(_ rows: [T]) throws
+	func update<T: SqlPrimaryKeyTable>(_ row: T) throws
+	func update<T: SqlPrimaryKeyTable>(_ rows: [T]) throws
 	
-	func update<T: CqlPrimaryKeyTable2>(_ row: T) throws
-	func update<T: CqlPrimaryKeyTable2>(_ rows: [T]) throws
+	func update<T: SqlPrimaryKeyTable2>(_ row: T) throws
+	func update<T: SqlPrimaryKeyTable2>(_ rows: [T]) throws
 	
-	func delete<T: CqlPrimaryKeyTable>(_ row: T) throws
+	func delete<T: SqlPrimaryKeyTable>(_ row: T) throws
 	func delete<T: Codable>(_ predicate: Predicate<T>) throws
 	
-	func delete<T: CqlPrimaryKeyTable2>(_ row: T) throws
+	func delete<T: SqlPrimaryKeyTable2>(_ row: T) throws
 	/**
 	Finds pagedBy results at a time.
 	This is not asynchronous, it will only return when all results are processed or
@@ -71,36 +71,36 @@ public protocol StorageConnection {
 	*/
 	func fetch<T: AnyJoin>(query: JoinedQuery<T>, results: ([T]) -> Bool) throws
 	
-	func get<T: CqlPrimaryKeyTable>(_ type: T.Type, _ id: T.Key) throws -> T?
-	func get<T: CqlPrimaryKeyTable2>(_ type: T.Type, _ id1: T.Key1, _ id2: T.Key2) throws -> T?
-	func nextId<T: CqlPrimaryKeyTable>(_ type: T.Type) throws -> Int where T.Key == Int
+	func get<T: SqlPrimaryKeyTable>(_ type: T.Type, _ id: T.Key) throws -> T?
+	func get<T: SqlPrimaryKeyTable2>(_ type: T.Type, _ id1: T.Key1, _ id2: T.Key2) throws -> T?
+	func nextId<T: SqlPrimaryKeyTable>(_ type: T.Type) throws -> Int where T.Key == Int
 }
 
 public extension StorageConnection {
 	func insert<T: Codable>(_ row: T) throws {
 		try insert([row])
 	}
-	func update<T: CqlPrimaryKeyTable>(_ row: T) throws {
+	func update<T: SqlPrimaryKeyTable>(_ row: T) throws {
 		try update([row])
 	}
-	func update<T: CqlPrimaryKeyTable2>(_ row: T) throws {
+	func update<T: SqlPrimaryKeyTable2>(_ row: T) throws {
 		try update([row])
 	}
-	func get<T: CqlPrimaryKeyTable>(_ type: T.Type, _ id: T.Key) throws -> T? {
+	func get<T: SqlPrimaryKeyTable>(_ type: T.Type, _ id: T.Key) throws -> T? {
 		let predicate = T.primaryKey %== id
 		let vs = try self.find(predicate)
 		return vs.first
 	}
-	func get<T: CqlPrimaryKeyTable2>(_ type: T.Type, _ id1: T.Key1, _ id2: T.Key2) throws -> T? {
+	func get<T: SqlPrimaryKeyTable2>(_ type: T.Type, _ id1: T.Key1, _ id2: T.Key2) throws -> T? {
 		let predicate = (T.primaryKey.0 %== id1) %&& (T.primaryKey.1 %== id2)
 		let vs = try self.find(predicate)
 		return vs.first
 	}
-	func delete<T: CqlPrimaryKeyTable>(_ row: T) throws {
+	func delete<T: SqlPrimaryKeyTable>(_ row: T) throws {
 		let predicate = T.primaryKey %== row[keyPath: T.primaryKey]
 		try delete(predicate)
 	}
-	func delete<T: CqlPrimaryKeyTable2>(_ row: T) throws {
+	func delete<T: SqlPrimaryKeyTable2>(_ row: T) throws {
 		let predicate = (T.primaryKey.0 %== row[keyPath: T.primaryKey.0]) %&& (T.primaryKey.1 %== row[keyPath: T.primaryKey.1])
 		try delete(predicate)
 	}

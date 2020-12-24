@@ -125,7 +125,7 @@ class SqlPredicateBuilderTests: SqiliteTestCase {
 //	}
 }
 
-fileprivate struct PredTest: CqlPrimaryKeyTable {
+fileprivate struct PredTest: SqlPrimaryKeyTable {
 	var id = 0
 	var name = ""
 	var nenum = IntEnum.val1
@@ -135,7 +135,7 @@ fileprivate struct PredTest: CqlPrimaryKeyTable {
 	static let items = toMany(\OptionalItem.parentId)
 }
 
-fileprivate struct Child: CqlTableRepresentable {
+fileprivate struct Child: SqlTableRepresentable {
 	var parentId = 0
 	var description = ""
 	
@@ -143,7 +143,7 @@ fileprivate struct Child: CqlTableRepresentable {
 }
 
 
-fileprivate struct OptionalItem: CqlPrimaryKeyTable {
+fileprivate struct OptionalItem: SqlPrimaryKeyTable {
 	var id = 0
 	var parentId: Int? = nil
 	var description = ""

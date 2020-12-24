@@ -195,7 +195,7 @@ public enum SchemaRefactor {
 	static func renamed<T: Codable>(class tableType: T.Type, from previousName: String) -> SchemaRefactor {
 		return .renameTable(from: previousName, to: String(describing: tableType))
 	}
-	static func renamed<T: CqlTableRepresentable, P: SqlConvertible>(property: WritableKeyPath<T, P>, from previousName: String) -> SchemaRefactor {
+	static func renamed<T: SqlTableRepresentable, P: SqlConvertible>(property: WritableKeyPath<T, P>, from previousName: String) -> SchemaRefactor {
 		guard let propertyPath = SqlPropertyPath.path(T(), keyPath: property) else {
 			fatalError("could not determine property path for \(property)")
 		}

@@ -33,7 +33,7 @@ public extension CqlRowChangeSet {
 	}
 }
 
-public class ChangeSet<T: CqlPrimaryKeyTable>: CqlRowChangeSet {
+public class ChangeSet<T: SqlPrimaryKeyTable>: CqlRowChangeSet {
 		private var deleted = [T.Key:T]()
 		private var updated = [T.Key:T]()
 		private var created = [T.Key:T]()
@@ -77,7 +77,7 @@ public class ChangeSet<T: CqlPrimaryKeyTable>: CqlRowChangeSet {
 		}
 	}
 
-	public class ChangeSet2<T: CqlPrimaryKeyTable2>: CqlRowChangeSet {
+	public class ChangeSet2<T: SqlPrimaryKeyTable2>: CqlRowChangeSet {
 		struct Key: Hashable {
 			let key1: T.Key1
 			let key2: T.Key2
@@ -123,7 +123,7 @@ public class ChangeSet<T: CqlPrimaryKeyTable>: CqlRowChangeSet {
 	}
 
 public protocol CqlChangeSetSource {
-	func changeSet<T: CqlPrimaryKeyTable>(for type: T.Type) -> ChangeSet<T>
-	func changeSet<T: CqlPrimaryKeyTable2>(for type: T.Type) -> ChangeSet2<T>
+	func changeSet<T: SqlPrimaryKeyTable>(for type: T.Type) -> ChangeSet<T>
+	func changeSet<T: SqlPrimaryKeyTable2>(for type: T.Type) -> ChangeSet2<T>
 }
 
