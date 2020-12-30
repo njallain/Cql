@@ -30,7 +30,7 @@ public class InsertUpdateDeleteTests: AsyncStorageTestCase {
 			XCTFail("nil result")
 			return
 		}
-		let rows = try! conn.find(Query(predicate: Predicate.all(Sample.self), order: Order(by: \Sample.id)))
+		let rows = try! conn.find(Query(predicate: Predicate(all: Sample.self), order: Order(by: \Sample.id)))
 		XCTAssertEqual(3, rows.count)
 		XCTAssertEqual([1,2,3], rows.map({$0.id}))
 		XCTAssertEqual(["updated", "test2", "test3"], rows.map({$0.name}))

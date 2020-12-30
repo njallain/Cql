@@ -94,7 +94,7 @@ public class FindTests: AsyncStorageTestCase {
 		let query = JoinedQuery(
 			SampleJoin.self,
 			left: \Sample.id %== 4,
-			right: Predicate.all(SampleChild.self),
+			right: Predicate(all: SampleChild.self),
 			pageSize: 1,
 			order: Order(by: \SampleChild.childId, through: \SampleJoin.child))
 		let result = storage.query(where: query)

@@ -106,7 +106,7 @@ public class AsyncStorageTests: AsyncStorageTestCase {
 			try! conn.insert(Sample(id: 1, name: "test"))
 			return mem
 		}
-		let query = Query(predicate: Predicate.all(Sample.self))
+		let query = Query(predicate: Predicate(all: Sample.self))
 		let result = storage.query(where: query)
 		guard let rows = wait(for: result, expect: [expectInit, expectComplete], enforceOrder: true) else {
 			XCTFail("nil result")

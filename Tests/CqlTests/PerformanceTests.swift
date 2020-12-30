@@ -157,7 +157,7 @@ class PerformanceTests: XCTestCase {
 			try txn.commit()
 			measure {
 				do {
-					let _ = try conn.find(Predicate.all(MediumIntId.self))
+					let _ = try conn.find(Predicate(all: MediumIntId.self))
 				} catch {
 					XCTFail(error.localizedDescription)
 				}
@@ -177,7 +177,7 @@ class PerformanceTests: XCTestCase {
 			try txn.commit()
 			measure {
 				do {
-					let _ = try conn.find(Predicate.all(MediumIntIdCustom.self))
+					let _ = try conn.find(Predicate(all: MediumIntIdCustom.self))
 				} catch {
 					XCTFail(error.localizedDescription)
 				}

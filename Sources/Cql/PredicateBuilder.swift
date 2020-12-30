@@ -42,20 +42,20 @@ public extension WritableKeyPath where Root: Codable, Value: SqlComparable {
 }
 
 public extension Predicate {
+	init(all type: Model.Type) {
+		self.init(TruePredicatePart<Model>())
+	}
 	static func %&& (left: Predicate<Model>, right: Predicate<Model>) -> Predicate<Model> {
 		return Predicate(ComposePredicate(.all, left, right))
 	}
 	static func %|| (left: Predicate<Model>, right: Predicate<Model>) -> Predicate<Model> {
 		return Predicate(ComposePredicate(.any, left, right))
 	}
-	static func all(_ type: Model.Type) -> Self {
-		return Predicate(TruePredicatePart<Model>())
-	}
 }
 
 public extension RelationToOptionalMany {
 	func `in`(_ predicate: Predicate<Target>) -> Predicate<Source> {
-		//let oldPredicate = Predicate.all(Target.self).append(predicate)
+		//let oldPredicate = Predicate(all: Target.self).append(predicate)
 		let subPred = AnySubPredicate(OptionalSubPredicate(selectProperty: self.keyPath, predicate: predicate))
 		let inPred = ComparePropertyValue(Source.primaryKey, .anyPredicate(subPred))
 		return Predicate(inPred)
@@ -64,7 +64,7 @@ public extension RelationToOptionalMany {
 
 public extension RelationToMany {
 	func `in`(_ predicate: Predicate<Target>) -> Predicate<Source> {
-		//let oldPredicate = Predicate.all(Target.self).append(predicate)
+		//let oldPredicate = Predicate(all: Target.self).append(predicate)
 		let subPred = AnySubPredicate(SubPredicate(selectProperty: self.keyPath, predicate: predicate))
 		let inPred = ComparePropertyValue(Source.primaryKey, .anyPredicate(subPred))
 		return Predicate(inPred)
@@ -74,7 +74,7 @@ public extension RelationToMany {
 
 public extension RelationToOne {
 	func `in`(_ predicate: Predicate<Target>) -> Predicate<Source> {
-		//let oldPredicate = Predicate.all(Target.self).append(predicate)
+		//let oldPredicate = Predicate(all: Target.self).append(predicate)
 		let subPred = AnySubPredicate(SubPredicate(selectProperty: Target.primaryKey, predicate: predicate))
 		let inPred = ComparePropertyValue(self.keyPath, .anyPredicate(subPred))
 		return Predicate(inPred)
@@ -85,7 +85,7 @@ public extension RelationToOne {
 //public struct PredicateBuilder<T: Codable> {
 //	public static func buildBlock(_ components: PredicatePart...) -> Predicate<T>
 //		where PredicatePart.Model == T {
-//		let pred = Predicate.all(T.self)
+//		let pred = Predicate(all: T.self)
 //			for part in components {
 //				pred.append(part)
 //			}

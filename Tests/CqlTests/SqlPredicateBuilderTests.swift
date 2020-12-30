@@ -95,12 +95,12 @@ class SqlPredicateBuilderTests: SqiliteTestCase {
 		} catch {
 			XCTFail("\(error.localizedDescription)")
 		}
-//		let pred = OptionalSubPredicate(selectProperty: \OptionalItem.parentId, predicate: Predicate.all(OptionalItem.self))
+//		let pred = OptionalSubPredicate(selectProperty: \OptionalItem.parentId, predicate: Predicate(all: OptionalItem.self))
 	}
 	func testOrderedQuery() {
 		do {
 			let db = try openTestDatabase()
-			let query = Query(predicate: Predicate.all(PredTest.self), order: Order(by: \PredTest.name))
+			let query = Query(predicate: Predicate(all: PredTest.self), order: Order(by: \PredTest.name))
 			let compiler = SqlPredicateCompiler<PredTest>(database: db)
 			let sql = compiler.compile(query)
 			XCTAssertEqual("order by name asc", sql.orderClause)

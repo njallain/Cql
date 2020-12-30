@@ -47,7 +47,7 @@ class DatabaseTests: SqiliteTestCase {
 				Foo(id: 6, name: "test2", description: nil)
 			]
 			try conn.insert(rows)
-			let results = try conn.find(Predicate.all(Foo.self))
+			let results = try conn.find(Predicate(all: Foo.self))
 			XCTAssertEqual(2, results.count)
 			verify(rows[0], results)
 			verify(rows[1], results)
@@ -69,7 +69,7 @@ class DatabaseTests: SqiliteTestCase {
 				$0.name = updatedRow.name
 				$0.description = updatedRow.description
 			}
-			let results = try conn.find(Predicate.all(Foo.self))
+			let results = try conn.find(Predicate(all: Foo.self))
 			XCTAssertEqual(1, results.count)
 			verify(updatedRow, results)
 		} catch {
@@ -183,7 +183,7 @@ class DatabaseTests: SqiliteTestCase {
 			let txn = try conn.beginTransaction()
 			try conn.insert([o, o2])
 			try txn.commit()
-			let pred = Predicate.all(KeyedFoo.self)
+			let pred = Predicate(all: KeyedFoo.self)
 			var results = try conn.find(Query(predicate: pred, order: Order(by: \KeyedFoo.name)))
 			XCTAssertEqual(2, results.count)
 			verify(o2, results[0])
@@ -215,7 +215,7 @@ class DatabaseTests: SqiliteTestCase {
 	private func verifyPages(_ conn: StorageConnection, _ expected: [KeyedFoo], pageSize: Int, expectedCalls: Int) throws {
 		var result = [KeyedFoo]()
 		var numCalls = 0
-		let pred = Predicate.all(KeyedFoo.self)
+		let pred = Predicate(all: KeyedFoo.self)
 		let order = Order(by: \KeyedFoo.id)
 		try conn.fetch(query: Query(predicate: pred, pageSize: pageSize, order: order)) {
 			numCalls += 1
@@ -243,7 +243,7 @@ class DatabaseTests: SqiliteTestCase {
 			try txn.commit()
 			let leftPred = Predicate(\KeyedFoo.id %== 7)
 				//.property(\.id, .equal(7))
-			let rightPred = Predicate.all(FooChild.self)
+			let rightPred = Predicate(all: FooChild.self)
 			let results = try conn.find(JoinedQuery(ParentChild.self, left: leftPred, right: rightPred))
 			XCTAssertEqual(2, results.count)
 			verify(child1, results.map({$0.child}))
@@ -267,8 +267,8 @@ class DatabaseTests: SqiliteTestCase {
 			try conn.insert([o, o2])
 			try conn.insert([child1, child3])
 			try txn.commit()
-			let leftPred = Predicate.all(KeyedFoo.self)
-			let rightPred = Predicate.all(FooChild.self)
+			let leftPred = Predicate(all: KeyedFoo.self)
+			let rightPred = Predicate(all: FooChild.self)
 			let order = Order(by: \KeyedFoo.name, through: \ParentChild.parent)
 			let query = JoinedQuery(ParentChild.self, left: leftPred, right: rightPred, order: order)
 			let results = try conn.find(query)
@@ -327,7 +327,7 @@ class DatabaseTests: SqiliteTestCase {
 			try conn.insert([child1, child2, child3, child4])
 			try txn.commit()
 			let leftPred = \KeyedFoo.id %== 7
-			let rightPred = Predicate.all(OptChild.self)
+			let rightPred = Predicate(all: OptChild.self)
 			let order = Order(by: \KeyedFoo.name, through: \ParentOptChild.parent)
 			let query = JoinedQuery(ParentOptChild.self, left: leftPred, right: rightPred, order: order)
 			let results = try conn.find(query)
