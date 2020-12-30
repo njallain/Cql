@@ -23,7 +23,7 @@ enum IntEnum: Int, SqlIntEnum {
 	case val2 = 2
 }
 
-struct AllTable : Codable, SqlPrimaryKeyTable {
+struct AllTable : Codable, PrimaryKeyTable {
 	var id: UUID = UUID()
 	var nid: UUID? = nil
 	var n: Int = 0
@@ -52,7 +52,7 @@ struct AllTable : Codable, SqlPrimaryKeyTable {
 }
 
 
-struct JoinTable: SqlPrimaryKeyTable2 {
+struct JoinTable: PrimaryKeyTable2 {
 	var allId: UUID = UUID()
 	var childId: Int = 0
 	var description: String = ""
@@ -63,7 +63,7 @@ struct JoinTable: SqlPrimaryKeyTable2 {
 	static let foreignKeys: [CqlForeignKeyRelation] = [parent, child]
 }
 
-struct ChildTable: SqlPrimaryKeyTable {
+struct ChildTable: PrimaryKeyTable {
 	var id: Int = 0
 	var firstName: String = ""
 	var lastName: String = ""

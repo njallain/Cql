@@ -26,7 +26,7 @@ public protocol SqlTableRepresentable: Codable, CqlInitable {
 /**
 Protocol to implement if the table has a single primary key
 */
-public protocol SqlPrimaryKeyTable: SqlTableRepresentable {
+public protocol PrimaryKeyTable: SqlTableRepresentable {
 	associatedtype Key: SqlComparable
 	static func keyAllocator(_ connection: StorageConnection) throws -> AnyKeyAllocator<Key>
 	static var primaryKey: WritableKeyPath<Self, Key> {get}
@@ -35,7 +35,7 @@ public protocol SqlPrimaryKeyTable: SqlTableRepresentable {
 /**
 Protocol to implement if the table has a two part primary key
 */
-public protocol SqlPrimaryKeyTable2: SqlTableRepresentable {
+public protocol PrimaryKeyTable2: SqlTableRepresentable {
 	associatedtype Key1: SqlComparable
 	associatedtype Key2: SqlComparable
 	static var primaryKey: (WritableKeyPath<Self, Key1>, WritableKeyPath<Self, Key2>) {get}
@@ -45,14 +45,14 @@ public struct JoinKey<L: SqlComparable, R: SqlComparable>: Hashable {
 	public var leftKey: L
 	public var rightKey: R
 }
-public extension SqlPrimaryKeyTable2 {
+public extension PrimaryKeyTable2 {
 	var primaryKeys: JoinKey<Key1, Key2> { JoinKey(leftKey: self[keyPath: Self.primaryKey.0], rightKey: self[keyPath: Self.primaryKey.1]) }
 }
 public extension SqlTableRepresentable {
 	static var sqlCoder: SqlCoder<Self> { SqlCoder<Self>() }
 }
 //extension SqlTableRepresentable where Self: PrimaryKeyTable {
-public extension SqlPrimaryKeyTable {
+public extension PrimaryKeyTable {
 	static func buildSchema() -> TableSchemaProtocol {
 		
 		let schema = buildBaseSchema(self)
@@ -63,7 +63,7 @@ public extension SqlPrimaryKeyTable {
 	}
 }
 
-public extension SqlTableRepresentable where Self: SqlPrimaryKeyTable2 {
+public extension SqlTableRepresentable where Self: PrimaryKeyTable2 {
 	static func buildSchema() -> TableSchemaProtocol {
 		let schema = buildBaseSchema(self)
 		let (path1, path2) = Self.primaryKey
@@ -99,7 +99,7 @@ fileprivate func buildBaseSchema<T: SqlTableRepresentable>(_ type: T.Type) -> Ta
 public protocol CqlForeignKeyRelation {
 	func buildForeignKey() -> ForeignKey
 }
-public struct RelationToOne<Source: Codable, Target: SqlPrimaryKeyTable> {
+public struct RelationToOne<Source: Codable, Target: PrimaryKeyTable> {
 	let keyPath: WritableKeyPath<Source, Target.Key>
 	public let join: JoinProperty<Source, Target, Target.Key>
 	init(_ target: Target.Type, _ keyPath: WritableKeyPath<Source, Target.Key>) {
@@ -108,7 +108,7 @@ public struct RelationToOne<Source: Codable, Target: SqlPrimaryKeyTable> {
 	}
 }
 
-public struct RelationToOptionalOne<Source: Codable, Target: SqlPrimaryKeyTable> {
+public struct RelationToOptionalOne<Source: Codable, Target: PrimaryKeyTable> {
 	let keyPath: WritableKeyPath<Source, Target.Key?>
 	//public let join: OptionalJoinProperty<Source, Target, Target.Key>
 	init(_ target: Target.Type, _ keyPath: WritableKeyPath<Source, Target.Key?>) {
@@ -117,7 +117,7 @@ public struct RelationToOptionalOne<Source: Codable, Target: SqlPrimaryKeyTable>
 	}
 }
 
-public struct RelationToMany<Source: SqlPrimaryKeyTable, Target: Codable> {
+public struct RelationToMany<Source: PrimaryKeyTable, Target: Codable> {
 	let keyPath: WritableKeyPath<Target, Source.Key>
 	public let join: JoinProperty<Source, Target, Source.Key>
 	init(_ keyPath: WritableKeyPath<Target, Source.Key>, _ target: Target.Type) {
@@ -126,7 +126,7 @@ public struct RelationToMany<Source: SqlPrimaryKeyTable, Target: Codable> {
 	}
 }
 
-public struct RelationToOptionalMany<Source: SqlPrimaryKeyTable, Target: Codable> {
+public struct RelationToOptionalMany<Source: PrimaryKeyTable, Target: Codable> {
 	let keyPath: WritableKeyPath<Target, Source.Key?>
 	public let join: OptionalJoinProperty<Source, Target, Source.Key>
 	init(_ keyPath: WritableKeyPath<Target, Source.Key?>, _ target: Target.Type) {
@@ -154,7 +154,7 @@ extension RelationToOptionalOne: CqlForeignKeyRelation where Source: SqlTableRep
 }
 
 
-public extension SqlPrimaryKeyTable {
+public extension PrimaryKeyTable {
 	static func toMany<Target: Codable>(_ keyPath: WritableKeyPath<Target, Key>) -> RelationToMany<Self, Target> {
 		return RelationToMany(keyPath, Target.self)
 	}
@@ -164,11 +164,11 @@ public extension SqlPrimaryKeyTable {
 }
 
 public extension Encodable where Self: Decodable {
-	static func toOne<Target: SqlPrimaryKeyTable>(_ target: Target.Type, _ keyPath: WritableKeyPath<Self, Target.Key>) -> RelationToOne<Self, Target> {
+	static func toOne<Target: PrimaryKeyTable>(_ target: Target.Type, _ keyPath: WritableKeyPath<Self, Target.Key>) -> RelationToOne<Self, Target> {
 		let relation = RelationToOne(target, keyPath)
 		return relation
 	}
-	static func toOne<Target: SqlPrimaryKeyTable>(_ target: Target.Type, _ keyPath: WritableKeyPath<Self, Target.Key?>) -> RelationToOptionalOne<Self, Target> {
+	static func toOne<Target: PrimaryKeyTable>(_ target: Target.Type, _ keyPath: WritableKeyPath<Self, Target.Key?>) -> RelationToOptionalOne<Self, Target> {
 		let relation = RelationToOptionalOne(target, keyPath)
 		return relation
 	}

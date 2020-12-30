@@ -246,14 +246,14 @@ class PerformanceTests: XCTestCase {
 	}
 }
 
-fileprivate struct SmallIntId: SqlPrimaryKeyTable {
+fileprivate struct SmallIntId: PrimaryKeyTable {
 	var id: Int = 0
 	var name: String = ""
 	
 	static let primaryKey = \SmallIntId.id
 }
 
-fileprivate struct MediumIntId: SqlPrimaryKeyTable {
+fileprivate struct MediumIntId: PrimaryKeyTable {
 	var id: Int = 0
 	var title: String = ""
 	var startDate = Date(timeIntervalSinceReferenceDate: 0)
@@ -265,7 +265,7 @@ fileprivate struct MediumIntId: SqlPrimaryKeyTable {
 	static let primaryKey = \MediumIntId.id
 }
 
-fileprivate struct MediumIntIdCustom: SqlPrimaryKeyTable {
+fileprivate struct MediumIntIdCustom: PrimaryKeyTable {
 	var id: Int = 0
 	var title: String = ""
 	var startDate = Date(timeIntervalSinceReferenceDate: 0)
@@ -298,14 +298,14 @@ fileprivate struct MediumIntIdCustom: SqlPrimaryKeyTable {
 	}
 	static let sqlCoder = SqlCoder<MediumIntIdCustom>(encode: MediumIntIdCustom.encode, decode: MediumIntIdCustom.decode)
 }
-fileprivate struct SmallStringId: SqlPrimaryKeyTable {
+fileprivate struct SmallStringId: PrimaryKeyTable {
 	var id: String = ""
 	var name: String = ""
 	
 	static let primaryKey = \SmallStringId.id
 }
 
-fileprivate struct SmallUuidId: SqlPrimaryKeyTable {
+fileprivate struct SmallUuidId: PrimaryKeyTable {
 	var id: UUID = UUID()
 	var name: String = ""
 	

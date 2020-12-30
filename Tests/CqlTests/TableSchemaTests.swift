@@ -86,7 +86,7 @@ class TableSchemaTests: XCTestCase {
 }
 
 
-fileprivate struct IndexedObj: Codable, SqlPrimaryKeyTable {
+fileprivate struct IndexedObj: Codable, PrimaryKeyTable {
 	var id: Int = 0
 	var s: String = ""
 	var a: Int = 0
@@ -100,7 +100,7 @@ fileprivate struct IndexedObj: Codable, SqlPrimaryKeyTable {
 	]
 }
 
-fileprivate struct DoubleKey: Codable, SqlPrimaryKeyTable2 {
+fileprivate struct DoubleKey: Codable, PrimaryKeyTable2 {
 	var id1: Int = 0
 	var id2: String = ""
 	var n: String = ""
@@ -108,7 +108,7 @@ fileprivate struct DoubleKey: Codable, SqlPrimaryKeyTable2 {
 	static let primaryKey = (\DoubleKey.id1, \DoubleKey.id2)
 }
 
-fileprivate struct Parent: SqlPrimaryKeyTable {
+fileprivate struct Parent: PrimaryKeyTable {
 	var id: Int = 0
 	var name: String = ""
 	

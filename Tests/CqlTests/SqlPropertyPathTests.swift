@@ -77,7 +77,7 @@ fileprivate struct Args: Codable {
 }
 
 
-fileprivate struct Parent: SqlPrimaryKeyTable {
+fileprivate struct Parent: PrimaryKeyTable {
 	var id = UUID()
 	var name = ""
 	

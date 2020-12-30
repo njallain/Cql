@@ -44,19 +44,19 @@ public struct AnyKeyAllocator<Key>: KeyAllocator {
 	}
 }
 
-public extension SqlPrimaryKeyTable where Key == Int {
+public extension PrimaryKeyTable where Key == Int {
 	static func keyAllocator(_ connection: StorageConnection) throws -> AnyKeyAllocator<Key> {
 		let nextKey = try connection.nextId(self)
 		return AnyKeyAllocator(IntKeyAllocator(nextKey))
 	}
 }
 
-public extension SqlPrimaryKeyTable where Key == UUID {
+public extension PrimaryKeyTable where Key == UUID {
 	static func keyAllocator(_ connection: StorageConnection) throws -> AnyKeyAllocator<Key> {
 		return AnyKeyAllocator(UuidKeyAllocator())
 	}
 }
-public extension SqlPrimaryKeyTable where Key == String {
+public extension PrimaryKeyTable where Key == String {
 	static func keyAllocator(_ connection: StorageConnection) throws -> AnyKeyAllocator<Key> {
 		return AnyKeyAllocator(StringKeyAllocator())
 	}

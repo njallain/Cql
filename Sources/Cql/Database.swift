@@ -43,13 +43,13 @@ public struct SchemaDefiner {
 	/**
 	Defines the schema for a PrimaryKeyTable
 	*/
-	public static func table<T: SqlPrimaryKeyTable>(_ type: T.Type) -> SchemaDefiner {
+	public static func table<T: PrimaryKeyTable>(_ type: T.Type) -> SchemaDefiner {
 		return SchemaDefiner(type.buildSchema())
 	}
 	/**
 	Defines the schema for a PrimaryKeyTable2
 	*/
-	public static func table<T: SqlPrimaryKeyTable2>(_ type: T.Type) -> SchemaDefiner {
+	public static func table<T: PrimaryKeyTable2>(_ type: T.Type) -> SchemaDefiner {
 		return SchemaDefiner(type.buildSchema())
 	}
 	/**
@@ -178,7 +178,7 @@ public class Database: Storage {
 		}
 	}
 	
-	public func keyAllocator<T>(for type: T.Type) -> AnyKeyAllocator<T.Key> where T : SqlPrimaryKeyTable {
+	public func keyAllocator<T>(for type: T.Type) -> AnyKeyAllocator<T.Key> where T : PrimaryKeyTable {
 		let name = Database.tableName(of: type)
 		if let allocator = keyAllocators[name] {
 			return allocator as! AnyKeyAllocator<T.Key>
@@ -243,10 +243,10 @@ public class SqlConnection: StorageConnection {
 		let sql = "update \(schema.name) set \(setSql) \(whereSql)"
 		try driver.execute(sql: sql, arguments: args)
 	}
-	public func update<T: SqlPrimaryKeyTable>(_ rows: [T]) throws {
+	public func update<T: PrimaryKeyTable>(_ rows: [T]) throws {
 		try update(keyedRows: rows)
 	}
-	public func update<T: SqlPrimaryKeyTable2>(_ rows: [T]) throws {
+	public func update<T: PrimaryKeyTable2>(_ rows: [T]) throws {
 		try update(keyedRows: rows)
 	}
 	private func update<T: Codable>(keyedRows rows: [T]) throws {
@@ -316,7 +316,7 @@ public class SqlConnection: StorageConnection {
 		}
 	}
 	
-	public func nextId<T>(_ type: T.Type) throws -> Int where T : SqlPrimaryKeyTable, T.Key == Int {
+	public func nextId<T>(_ type: T.Type) throws -> Int where T : PrimaryKeyTable, T.Key == Int {
 		let schema = database.schema(for: type)
 		let sql = "select max(\(schema.primaryKey[0])) as maxId from \(schema.name)"
 		let cursor = try driver.query(sql: sql, bind: ["maxId"], arguments: [])

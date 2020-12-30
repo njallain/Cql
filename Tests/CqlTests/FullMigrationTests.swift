@@ -203,7 +203,7 @@ fileprivate enum ItemState: Int, SqlIntEnum {
 }
 
 // old schema
-fileprivate struct _Project: SqlPrimaryKeyTable {
+fileprivate struct _Project: PrimaryKeyTable {
 	var id: Int = 0
 	var name = ""
 	var details = ""
@@ -211,7 +211,7 @@ fileprivate struct _Project: SqlPrimaryKeyTable {
 	static let items = toMany(\_Item.projectId)
 }
 
-fileprivate struct _Item: SqlPrimaryKeyTable {
+fileprivate struct _Item: PrimaryKeyTable {
 	var id = 0
 	var title = ""
 	var projectId = 0
@@ -221,14 +221,14 @@ fileprivate struct _Item: SqlPrimaryKeyTable {
 	static let primaryKey = \_Item.id
 }
 
-fileprivate struct _Comment: SqlPrimaryKeyTable {
+fileprivate struct _Comment: PrimaryKeyTable {
 	var id = UUID.defaultValue
 	var body = ""
 	var itemId = 0
 	static let item = toOne(_Item.self, \.itemId)
 	static let primaryKey = \_Comment.id
 }
-fileprivate struct OldAttachment: SqlPrimaryKeyTable {
+fileprivate struct OldAttachment: PrimaryKeyTable {
 	var id = 0
 	var data = Data()
 	var contentType = ""
@@ -239,7 +239,7 @@ fileprivate struct OldAttachment: SqlPrimaryKeyTable {
 
 // new schema
 // rename column
-fileprivate struct Project: SqlPrimaryKeyTable {
+fileprivate struct Project: PrimaryKeyTable {
 	var id: Int = 0
 	var title = ""	// renamed from name
 	var details = ""
@@ -248,7 +248,7 @@ fileprivate struct Project: SqlPrimaryKeyTable {
 }
 
 // new default
-fileprivate struct Item: SqlPrimaryKeyTable {
+fileprivate struct Item: PrimaryKeyTable {
 	var id = 0
 	var title = ""
 	var position = Double(0)
@@ -257,7 +257,7 @@ fileprivate struct Item: SqlPrimaryKeyTable {
 }
 
 // introduce join
-fileprivate struct ProjectItem: SqlPrimaryKeyTable2 {
+fileprivate struct ProjectItem: PrimaryKeyTable2 {
 	var projectId = 0
 	var itemId = 0
 	var position: Double = 0
@@ -265,7 +265,7 @@ fileprivate struct ProjectItem: SqlPrimaryKeyTable2 {
 }
 
 // rename table
-fileprivate struct Attachment: SqlPrimaryKeyTable{
+fileprivate struct Attachment: PrimaryKeyTable{
 	var id = 0
 	var data = Data()
 	var contentType = ""
@@ -275,7 +275,7 @@ fileprivate struct Attachment: SqlPrimaryKeyTable{
 }
 
 // primary key change
-fileprivate struct Comment: SqlPrimaryKeyTable {
+fileprivate struct Comment: PrimaryKeyTable {
 	var id = 0
 	var body = ""
 	var itemId = 0

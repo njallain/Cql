@@ -12,7 +12,7 @@ import XCTest
 class SqlPredicateBuilderTests: SqiliteTestCase {
 
 	private func openTestDatabase() throws -> Database {
-		return try openDatabase([.table(PredTest.self), .table(Child.self), .table(OptionalItem.self)])
+		return try openDatabase([.table(PredTest.self), .table(PredChild.self), .table(OptionalItem.self)])
 	}
 
 	func testSqlPredicate() {
@@ -57,8 +57,8 @@ class SqlPredicateBuilderTests: SqiliteTestCase {
 		do {
 			let db = try openTestDatabase()
 			let pred = \PredTest.nenum %== .val1
-			let childPred = Child.parent.in(pred)
-			let sqlBuilder = SqlPredicateCompiler<Child>(database: db)
+			let childPred = PredChild.parent.in(pred)
+			let sqlBuilder = SqlPredicateCompiler<PredChild>(database: db)
 			let sql = sqlBuilder.compile(childPred)
 			XCTAssertEqual("parentId in (select PredTest.id from PredTest as PredTest where PredTest.nenum = {argPredTest0})", sql.whereClause)
 			XCTAssertEqual(1, sqlBuilder.arguments.count)
@@ -71,11 +71,11 @@ class SqlPredicateBuilderTests: SqiliteTestCase {
 	func testChildSubPredicate() {
 		do {
 			let db = try openTestDatabase()
-			let childPred = \Child.description %== "test"
+			let childPred = \PredChild.description %== "test"
 			let pred = PredTest.children.in(childPred)
 			let sqlBuilder = SqlPredicateCompiler<PredTest>(database: db)
 			let sql = sqlBuilder.compile(pred)
-			XCTAssertEqual("id in (select Child.parentId from Child as Child where Child.description = {argChild0})", sql.whereClause)
+			XCTAssertEqual("id in (select PredChild.parentId from PredChild as PredChild where PredChild.description = {argPredChild0})", sql.whereClause)
 			XCTAssertEqual(1, sqlBuilder.arguments.count)
 			XCTAssertEqual(SqlValue.text("test"), sqlBuilder.arguments[0].value)
 		} catch {
@@ -125,25 +125,25 @@ class SqlPredicateBuilderTests: SqiliteTestCase {
 //	}
 }
 
-fileprivate struct PredTest: SqlPrimaryKeyTable {
+fileprivate struct PredTest: PrimaryKeyTable {
 	var id = 0
 	var name = ""
 	var nenum = IntEnum.val1
 	var senum: StringEnum? = nil
 	static let primaryKey = \PredTest.id
-	static let children = toMany(\Child.parentId)
+	static let children = toMany(\PredChild.parentId)
 	static let items = toMany(\OptionalItem.parentId)
 }
 
-fileprivate struct Child: SqlTableRepresentable {
+fileprivate struct PredChild: SqlTableRepresentable {
 	var parentId = 0
 	var description = ""
 	
-	static let parent = toOne(PredTest.self, \Child.parentId)
+	static let parent = toOne(PredTest.self, \PredChild.parentId)
 }
 
 
-fileprivate struct OptionalItem: SqlPrimaryKeyTable {
+fileprivate struct OptionalItem: PrimaryKeyTable {
 	var id = 0
 	var parentId: Int? = nil
 	var description = ""

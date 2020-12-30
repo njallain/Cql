@@ -8,7 +8,7 @@
 import Foundation
 
 
-public protocol CqlStorable {
+public protocol Storable {
 	func save(to connection: StorageConnection) throws
 }
 public protocol CqlChangeSetProtocol {
@@ -16,7 +16,7 @@ public protocol CqlChangeSetProtocol {
 	func saveUpdated(connection: StorageConnection) throws
 	func saveDeleted(connection: StorageConnection) throws
 }
-public protocol CqlRowChangeSet: CqlChangeSetProtocol {
+public protocol RowChangeSet: CqlChangeSetProtocol {
 	associatedtype T: Codable
 	mutating func new(initFn: (inout T) -> Void) -> T
 	mutating func updated(_ row: T)
@@ -27,13 +27,13 @@ public protocol CqlRowChangeSet: CqlChangeSetProtocol {
 	var deletedRows: [T] {get}
 }
 
-public extension CqlRowChangeSet {
+public extension RowChangeSet {
 	func saveNew(connection: StorageConnection) throws {
 		try connection.insert(newRows)
 	}
 }
 
-public class ChangeSet<T: SqlPrimaryKeyTable>: CqlRowChangeSet {
+public class ChangeSet<T: PrimaryKeyTable>: RowChangeSet {
 		private var deleted = [T.Key:T]()
 		private var updated = [T.Key:T]()
 		private var created = [T.Key:T]()
@@ -77,7 +77,7 @@ public class ChangeSet<T: SqlPrimaryKeyTable>: CqlRowChangeSet {
 		}
 	}
 
-	public class ChangeSet2<T: SqlPrimaryKeyTable2>: CqlRowChangeSet {
+	public class ChangeSet2<T: PrimaryKeyTable2>: RowChangeSet {
 		struct Key: Hashable {
 			let key1: T.Key1
 			let key2: T.Key2
@@ -122,8 +122,8 @@ public class ChangeSet<T: SqlPrimaryKeyTable>: CqlRowChangeSet {
 		}
 	}
 
-public protocol CqlChangeSetSource {
-	func changeSet<T: SqlPrimaryKeyTable>(for type: T.Type) -> ChangeSet<T>
-	func changeSet<T: SqlPrimaryKeyTable2>(for type: T.Type) -> ChangeSet2<T>
+public protocol ChangeSetSource {
+	func changeSet<T: PrimaryKeyTable>(for type: T.Type) -> ChangeSet<T>
+	func changeSet<T: PrimaryKeyTable2>(for type: T.Type) -> ChangeSet2<T>
 }
 
