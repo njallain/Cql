@@ -11,12 +11,12 @@ import Foundation
 public protocol Storable {
 	func save(to connection: StorageConnection) throws
 }
-public protocol CqlChangeSetProtocol {
+public protocol ChangeSetProtocol {
 	func saveNew(connection: StorageConnection) throws
 	func saveUpdated(connection: StorageConnection) throws
 	func saveDeleted(connection: StorageConnection) throws
 }
-public protocol RowChangeSet: CqlChangeSetProtocol {
+public protocol RowChangeSet: ChangeSetProtocol {
 	associatedtype T: Codable
 	mutating func new(initFn: (inout T) -> Void) -> T
 	mutating func updated(_ row: T)

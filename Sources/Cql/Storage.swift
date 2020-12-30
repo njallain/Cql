@@ -104,7 +104,7 @@ public extension StorageConnection {
 		let predicate = (T.primaryKey.0 %== row[keyPath: T.primaryKey.0]) %&& (T.primaryKey.1 %== row[keyPath: T.primaryKey.1])
 		try delete(predicate)
 	}
-	func save(changeSets: CqlChangeSetProtocol...) throws {
+	func save(changeSets: ChangeSetProtocol...) throws {
 		for changeSet in changeSets.reversed() {
 			try changeSet.saveDeleted(connection: self)
 		}

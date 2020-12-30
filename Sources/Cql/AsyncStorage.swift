@@ -30,6 +30,9 @@ public class AsyncStorage: ChangeSetSource {
 
 	/**
 	Creates the main async storage that responds on the main queue
+	
+	- Parameter synchronous: if true, the internal storage will be created synchronously
+	- Parameter createStorage: the function the creates the underlying storage object
 	*/
 	public init(synchronous: Bool = false, createStorage: @escaping () throws -> Storage) {
 		self.responseQueue = .main
@@ -38,6 +41,9 @@ public class AsyncStorage: ChangeSetSource {
 	}
 	/**
 	Create an AsyncStorage that uses the same worker queue as storage but publishes it's responses on a different queue
+	
+	- Parameter responseQueue: the queue that all publishers returned will recieve their events on
+	- Parameter storage: the main queue storage that will be shared
 	*/
 	public init(responseQueue: DispatchQueue, storage: AsyncStorage) {
 		self.responseQueue = responseQueue
@@ -175,8 +181,16 @@ fileprivate class StorageWorker {
 	}
 	public func changeSet<T: PrimaryKeyTable>(for type: T.Type) -> ChangeSet<T> {
 		guard let storage = self.storage else {
-			fatalError("initialization not complete")
-//			return ChangeSet<T>(<#AnyKeyAllocator<T.Key>#>)
+			// initialization is not yet complete, create a change set with a lazy key allocator
+			// that won't so a the allocator will not be needed until an actual insert occurs
+			let nextKey: () -> T.Key = { [weak self] in
+				guard let storage = self?.storage else {
+					fatalError("initialization not complete at time of next key request")
+				}
+				return storage.keyAllocator(for: type).next()
+			}
+			let allocator = AnyKeyAllocator(nextKey: nextKey)
+			return ChangeSet<T>(allocator)
 		}
 		return storage.changeSet(for: type)
 	}

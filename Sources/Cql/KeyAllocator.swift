@@ -36,6 +36,9 @@ public struct StringKeyAllocator: KeyAllocator {
 }
 public struct AnyKeyAllocator<Key>: KeyAllocator {
 	private let nextKeyFn: () -> Key
+	init(nextKey: @escaping () -> Key) {
+		self.nextKeyFn = nextKey
+	}
 	public init<T: KeyAllocator>(_ allocator: T) where T.Key == Key {
 		self.nextKeyFn = allocator.next
 	}
