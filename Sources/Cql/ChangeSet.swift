@@ -7,18 +7,26 @@
 
 import Foundation
 
-
+/**
+Represents anything that can be stored.  This could be a change set for single table, or change sets for multiple tables
+*/
 public protocol Storable {
 	func save(to connection: StorageConnection) throws
 }
+
+/**
+Protocol for change sets.  This is a protocol without an associated table type so change sets of different tables
+can be grouped together in a save.
+*/
 public protocol ChangeSetProtocol {
 	func saveNew(connection: StorageConnection) throws
 	func saveUpdated(connection: StorageConnection) throws
 	func saveDeleted(connection: StorageConnection) throws
 }
+
 public protocol RowChangeSet: ChangeSetProtocol {
 	associatedtype T: Codable
-	mutating func new(initFn: (inout T) -> Void) -> T
+	mutating func new(initializer: (inout T) -> Void) -> T
 	mutating func updated(_ row: T)
 	mutating func deleted(_ row: T)
 	
@@ -50,11 +58,11 @@ public class ChangeSet<T: PrimaryKeyTable>: RowChangeSet {
 		public var deletedRows: [T] { Array(deleted.values) }
 		
 		@discardableResult
-		public func new(initFn: (inout T) -> Void) -> T {
+		public func new(initializer: (inout T) -> Void) -> T {
 			var row = T()
 			let key = keyAllocator.next()
 			row[keyPath: T.primaryKey] = key
-			initFn(&row)
+			initializer(&row)
 			created[key] = row
 			return row
 		}
@@ -96,9 +104,9 @@ public class ChangeSet<T: PrimaryKeyTable>: RowChangeSet {
 		public var deletedRows: [T] { Array(deleted.values) }
 		
 		@discardableResult
-		public func new(initFn: (inout T) -> Void) -> T {
+		public func new(initializer: (inout T) -> Void) -> T {
 			var row = T()
-			initFn(&row)
+			initializer(&row)
 			created[Key(row)] = row
 			return row
 		}
