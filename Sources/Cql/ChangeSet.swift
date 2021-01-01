@@ -24,24 +24,8 @@ public protocol ChangeSetProtocol {
 	func saveDeleted(connection: StorageConnection) throws
 }
 
-public protocol RowChangeSet: ChangeSetProtocol {
-	associatedtype T: Codable
-	mutating func new(initializer: (inout T) -> Void) -> T
-	mutating func updated(_ row: T)
-	mutating func deleted(_ row: T)
-	
-	var newRows: [T] {get}
-	var updatedRows: [T] {get}
-	var deletedRows: [T] {get}
-}
 
-public extension RowChangeSet {
-	func saveNew(connection: StorageConnection) throws {
-		try connection.insert(newRows)
-	}
-}
-
-public class ChangeSet<T: SqlTable>: RowChangeSet {
+public class ChangeSet<T: SqlTable>: ChangeSetProtocol {
 	private var deleted = [T.Key:T]()
 	private var updated = [T.Key:T]()
 	private var created = [T.Key:T]()
@@ -82,6 +66,9 @@ public class ChangeSet<T: SqlTable>: RowChangeSet {
 	}
 	public func saveDeleted(connection: StorageConnection) throws {
 		for row in deletedRows { try connection.delete(row) }
+	}
+	public func saveNew(connection: StorageConnection) throws {
+		try connection.insert(newRows)
 	}
 }
 
