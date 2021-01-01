@@ -39,6 +39,8 @@ class PerformanceTests: XCTestCase {
 	}
 	
 	override func tearDown() {
+		_insConn = nil
+		_insDb = nil
 		cleanup()
 	}
 	
@@ -47,22 +49,22 @@ class PerformanceTests: XCTestCase {
 		let row = SmallIntId(id: id, name: "row \(id)")
 		try conn.insert(row)
 	}
+	private var _insDb: Storage?
+	private var _insConn: StorageConnection?
+	private func setupForInsert() {
+		_insDb = try! openTestDatabase()
+		_insConn = try! _insDb!.open()
+	}
+	
 	private func insertTest(batches: Int, size: Int, insertFn: (StorageConnection) throws -> Void) {
+		let conn = _insConn!
 		do {
-			let db = try openTestDatabase()
-			let conn = try db.open()
-			self.measure {
-				do {
-					for _ in 0 ..< batches {
-						let txn = try conn.beginTransaction()
-						for _ in 0 ..< size {
-							try insertFn(conn)
-						}
-						try txn.commit()
-					}
-				} catch {
-					XCTFail(error.localizedDescription)
+			for _ in 0 ..< batches {
+				let txn = try conn.beginTransaction()
+				for _ in 0 ..< size {
+					try insertFn(conn)
 				}
+				try txn.commit()
 			}
 		} catch {
 			XCTFail(error.localizedDescription)
@@ -73,33 +75,49 @@ class PerformanceTests: XCTestCase {
 	}
 	
 	func testIntIds() {
-		insertTest(insertFn: insertInt)
+		setupForInsert()
+		measure {
+			insertTest(insertFn: insertInt)
+		}
 	}
 	func testStringIds() {
-		self.insertTest(insertFn: { conn in
-			let id = UUID().uuidString
-			let row = SmallStringId(id: id, name: id)
-			try conn.insert(row)
-		})
+		setupForInsert()
+		measure {
+			self.insertTest(insertFn: { conn in
+				let id = UUID().uuidString
+				let row = SmallStringId(id: id, name: id)
+				try conn.insert(row)
+			})
+		}
 	}
 	func testUuids() {
-		self.insertTest(insertFn: { conn in
-			let id = UUID()
-			let row = SmallUuidId(id: id, name: id.uuidString)
-			try conn.insert(row)
-		})
+		setupForInsert()
+		measure {
+			self.insertTest(insertFn: { conn in
+				let id = UUID()
+				let row = SmallUuidId(id: id, name: id.uuidString)
+				try conn.insert(row)
+			})
+
+		}
 	}
 	
 	func testMediumInsert() {
-		self.insertTest(batches: 1, size: 1000) { conn in
-			let m = createMedium(conn)
-			try conn.insert(m)
+		setupForInsert()
+		measure {
+			self.insertTest(batches: 1, size: 1000) { conn in
+				let m = createMedium(conn)
+				try conn.insert(m)
+			}
 		}
 	}
 	func testMediumCustomInsert() {
-		self.insertTest(batches: 1, size: 1000) { conn in
-			let m = createMediumCustom(conn)
-			try conn.insert(m)
+		setupForInsert()
+		measure {
+			self.insertTest(batches: 1, size: 1000) { conn in
+				let m = createMediumCustom(conn)
+				try conn.insert(m)
+			}
 		}
 	}
 	func testRawSqliteInsert() {
@@ -126,14 +144,6 @@ class PerformanceTests: XCTestCase {
 						b.add(name: "position", value: m.position)
 						b.add(name: "priority", value: m.priority)
 
-//						let args = [SqlArgument(name: "id", value: .int(m.id)),
-//												SqlArgument(name: "title", value: .text(m.title)),
-//												SqlArgument(name: "startDate", value: .date(m.startDate)),
-//												SqlArgument(name: "endDate", value: .null),
-//												SqlArgument(name: "notes", value: .text(m.notes!)),
-//												SqlArgument(name: "position", value: .real(m.position)),
-//												SqlArgument(name: "priority", value: .int(m.priority))
-//												]
 						try driver.execute(sql: sql, arguments: b.values)
 					}
 					try driver.commitTransaction()
