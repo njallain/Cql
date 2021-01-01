@@ -97,39 +97,6 @@ class DatabaseTests: SqiliteTestCase {
 			XCTFail(error.localizedDescription)
 		}
 	}
-	func testUpdateDoubleKey() {
-		do {
-			let db = try openTestDatabase()
-			let conn = try db.open()
-			var o = DoubleKeyed(leftId: 1, rightId: 2, name: "test")
-			try conn.insert(o)
-			o.name = "change"
-			try conn.update(o)
-			guard let row = try conn.get(DoubleKeyed.self, 1, 2) else {
-				XCTFail("couldn't find row")
-				return
-			}
-			verify(o, row)
-		} catch {
-			XCTFail(error.localizedDescription)
-		}
-	}
-
-	func testDeleteDoubleKey() {
-		do {
-			let db = try openTestDatabase()
-			let conn = try db.open()
-			let o = DoubleKeyed(leftId: 3, rightId: 4, name: "test")
-			try conn.insert(o)
-			try conn.delete(o)
-			if let _ = try conn.get(DoubleKeyed.self, 3, 4) {
-				XCTFail("row not deleted")
-				return
-			}
-		} catch {
-			XCTFail(error.localizedDescription)
-		}
-	}
 
 	func testFindChildObjects() {
 		do {
@@ -137,9 +104,9 @@ class DatabaseTests: SqiliteTestCase {
 			let conn = try db.open()
 			let o = KeyedFoo(id: 7, name: "my name", description: "desc", senum: .val1, nenum: nil)
 			let o2 = KeyedFoo(id: 8, name: "foo2", description: "desc", senum: .val2, nenum: .val2)
-			let child1 = FooChild(fooId: 7, name: "first")
-			let child2 = FooChild(fooId: 7, name: "second")
-			let child3 = FooChild(fooId: 8, name: "another")
+			let child1 = FooChild(id: 1, fooId: 7, name: "first")
+			let child2 = FooChild(id: 2, fooId: 7, name: "second")
+			let child3 = FooChild(id: 3, fooId: 8, name: "another")
 			let txn = try conn.beginTransaction()
 			try conn.insert([o, o2])
 			try conn.insert([child1, child2, child3])
@@ -158,9 +125,9 @@ class DatabaseTests: SqiliteTestCase {
 			let conn = try db.open()
 			let o = KeyedFoo(id: 7, name: "my name", description: "desc", senum: .val2, nenum: .val2)
 			let o2 = KeyedFoo(id: 8, name: "foo2", description: "desc", senum: .val1, nenum: nil)
-			let child1 = FooChild(fooId: 7, name: "first")
-			let child2 = FooChild(fooId: 7, name: "second")
-			let child3 = FooChild(fooId: 8, name: "another")
+			let child1 = FooChild(id: 1, fooId: 7, name: "first")
+			let child2 = FooChild(id: 2, fooId: 7, name: "second")
+			let child3 = FooChild(id: 3, fooId: 8, name: "another")
 			let txn = try conn.beginTransaction()
 			try conn.insert([o, o2])
 			try conn.insert([child1, child2, child3])
@@ -234,9 +201,9 @@ class DatabaseTests: SqiliteTestCase {
 			let conn = try db.open()
 			let o = KeyedFoo(id: 7, name: "my name", description: "desc", senum: .val2, nenum: .val2)
 			let o2 = KeyedFoo(id: 8, name: "foo2", description: "desc", senum: .val1, nenum: nil)
-			let child1 = FooChild(fooId: 7, name: "first")
-			let child2 = FooChild(fooId: 7, name: "second")
-			let child3 = FooChild(fooId: 8, name: "another")
+			let child1 = FooChild(id: 1, fooId: 7, name: "first")
+			let child2 = FooChild(id: 2, fooId: 7, name: "second")
+			let child3 = FooChild(id: 3, fooId: 8, name: "another")
 			let txn = try conn.beginTransaction()
 			try conn.insert([o, o2])
 			try conn.insert([child1, child2, child3])
@@ -261,8 +228,8 @@ class DatabaseTests: SqiliteTestCase {
 			let conn = try db.open()
 			let o = KeyedFoo(id: 7, name: "my name", description: "desc", senum: .val2, nenum: .val2)
 			let o2 = KeyedFoo(id: 8, name: "foo2", description: "desc", senum: .val1, nenum: nil)
-			let child1 = FooChild(fooId: 7, name: "first")
-			let child3 = FooChild(fooId: 8, name: "another")
+			let child1 = FooChild(id: 1, fooId: 7, name: "first")
+			let child3 = FooChild(id: 2, fooId: 8, name: "another")
 			let txn = try conn.beginTransaction()
 			try conn.insert([o, o2])
 			try conn.insert([child1, child3])
@@ -417,34 +384,33 @@ fileprivate struct Foo: Codable {
 	var description: String? = nil
 }
 
-fileprivate struct KeyedFoo: PrimaryKeyTable, Codable {
+fileprivate struct KeyedFoo: SqlTable, Codable {
 	var id: Int = 0
 	var name: String = ""
 	var description: String? = nil
 	var senum: StringEnum = .val1
 	var nenum: IntEnum? = nil
 	
-	static let primaryKey = \KeyedFoo.id
 	static let children = toMany(\FooChild.fooId)
 	static let optChildren = toMany(\OptChild.parentId)
 }
 
-fileprivate struct OptChild: PrimaryKeyTable {
+fileprivate struct OptChild: SqlTable {
 	var id: Int = 0
 	var parentId: Int? = nil
 	var name: String = ""
-	static let primaryKey = \OptChild.id
 	static let parent = toOne(KeyedFoo.self, \.parentId)
 	static let foreignKeys = [parent]
 }
-fileprivate struct DoubleKeyed: PrimaryKeyTable2 {
+fileprivate struct DoubleKeyed: SqlTable {
+	var id: Int = 0
 	var leftId: Int = 0
 	var rightId: Int = 0
 	var name = ""
-	static let primaryKey = (\DoubleKeyed.leftId, \DoubleKeyed.rightId)
 }
 
-fileprivate struct FooChild: SqlTableRepresentable {
+fileprivate struct FooChild: SqlTable {
+	var id: Int = 0
 	var fooId: Int = 0
 	var name = ""
 	static let parent = toOne(KeyedFoo.self, \.fooId)

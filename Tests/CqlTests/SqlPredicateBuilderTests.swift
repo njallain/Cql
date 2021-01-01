@@ -125,28 +125,26 @@ class SqlPredicateBuilderTests: SqiliteTestCase {
 //	}
 }
 
-fileprivate struct PredTest: PrimaryKeyTable {
+fileprivate struct PredTest: SqlTable {
 	var id = 0
 	var name = ""
 	var nenum = IntEnum.val1
 	var senum: StringEnum? = nil
-	static let primaryKey = \PredTest.id
 	static let children = toMany(\PredChild.parentId)
 	static let items = toMany(\OptionalItem.parentId)
 }
 
-fileprivate struct PredChild: SqlTableRepresentable {
+fileprivate struct PredChild: SqlTable {
+	var id: Int = 0
 	var parentId = 0
 	var description = ""
-	
 	static let parent = toOne(PredTest.self, \PredChild.parentId)
 }
 
 
-fileprivate struct OptionalItem: PrimaryKeyTable {
+fileprivate struct OptionalItem: SqlTable {
 	var id = 0
 	var parentId: Int? = nil
 	var description = ""
-	static let primaryKey = \OptionalItem.id
 //	static let parent = toOne(PredTest.self, \.parentId)
 }

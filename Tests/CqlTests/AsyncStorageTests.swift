@@ -148,26 +148,24 @@ extension Result {
 		}
 	}
 }
-struct Sample: PrimaryKeyTable {
+struct Sample: SqlTable {
 	var id: Int = 0
 	var name: String = ""
-	static let primaryKey = \Sample.id
 	static let children = toMany(\SampleChild.sampleId)
 }
-struct SampleChild: PrimaryKeyTable2 {
+struct SampleChild: SqlTable {
+	var id: Int = 0
 	var sampleId: Int = 0
 	var childId: Int = 0
 	var position: Double = 0
 	var description: String = ""
 	static let sample = toOne(Sample.self, \SampleChild.sampleId)
 	static let child = toOne(Child2.self, \SampleChild.childId)
-	static let primaryKey = (\SampleChild.sampleId, \SampleChild.childId)
 }
 
-struct Child2: PrimaryKeyTable {
+struct Child2: SqlTable {
 	var id: Int = 0
 	var name: String = ""
-	static let primaryKey = \Child2.id
 	static let samples = toMany(\SampleChild.childId)
 }
 

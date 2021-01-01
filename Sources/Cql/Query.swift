@@ -73,12 +73,12 @@ public extension StorageConnection {
 	func find<T: Codable>(all type: T.Type) throws -> [T] {
 		return try self.find(Predicate(all: type))
 	}
-	func findRelated<T: PrimaryKeyTable, U: Codable>(_ relationship: RelationToMany<T, U>, of parent: T) throws -> [U] {
-		let id = parent[keyPath: T.primaryKey]
+	func findRelated<T: SqlTable, U: Codable>(_ relationship: RelationToMany<T, U>, of parent: T) throws -> [U] {
+		let id = parent.id
 		let predicate = relationship.keyPath %== id 
 		return try self.find(predicate)
 	}
-//	func find<T: PrimaryKeyTable, U: Codable>(_ relationship: RelationToMany<T, U>, of parents: Predicate<T>) throws -> [U] {
+//	func find<T: SqlTable, U: Codable>(_ relationship: RelationToMany<T, U>, of parents: Predicate<T>) throws -> [U] {
 //		return []
 //	}
 

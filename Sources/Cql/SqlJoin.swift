@@ -7,7 +7,7 @@
 
 import Foundation
 
-public protocol AnyJoin: Codable, CqlInitable {
+public protocol AnyJoin: Codable, SqlInitable {
 	associatedtype Left: Codable
 	associatedtype Right: Codable
 	static var left: WritableKeyPath<Self, Left> {get}

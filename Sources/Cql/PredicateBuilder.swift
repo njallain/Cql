@@ -57,7 +57,7 @@ public extension RelationToOptionalMany {
 	func `in`(_ predicate: Predicate<Target>) -> Predicate<Source> {
 		//let oldPredicate = Predicate(all: Target.self).append(predicate)
 		let subPred = AnySubPredicate(OptionalSubPredicate(selectProperty: self.keyPath, predicate: predicate))
-		let inPred = ComparePropertyValue(Source.primaryKey, .anyPredicate(subPred))
+		let inPred = ComparePropertyValue(\Source.id, .anyPredicate(subPred))
 		return Predicate(inPred)
 	}
 }
@@ -66,7 +66,7 @@ public extension RelationToMany {
 	func `in`(_ predicate: Predicate<Target>) -> Predicate<Source> {
 		//let oldPredicate = Predicate(all: Target.self).append(predicate)
 		let subPred = AnySubPredicate(SubPredicate(selectProperty: self.keyPath, predicate: predicate))
-		let inPred = ComparePropertyValue(Source.primaryKey, .anyPredicate(subPred))
+		let inPred = ComparePropertyValue(\Source.id, .anyPredicate(subPred))
 		return Predicate(inPred)
 	}
 }
@@ -75,7 +75,7 @@ public extension RelationToMany {
 public extension RelationToOne {
 	func `in`(_ predicate: Predicate<Target>) -> Predicate<Source> {
 		//let oldPredicate = Predicate(all: Target.self).append(predicate)
-		let subPred = AnySubPredicate(SubPredicate(selectProperty: Target.primaryKey, predicate: predicate))
+		let subPred = AnySubPredicate(SubPredicate(selectProperty: \Target.id, predicate: predicate))
 		let inPred = ComparePropertyValue(self.keyPath, .anyPredicate(subPred))
 		return Predicate(inPred)
 	}

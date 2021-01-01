@@ -23,7 +23,7 @@ enum IntEnum: Int, SqlIntEnum {
 	case val2 = 2
 }
 
-struct AllTable : Codable, PrimaryKeyTable {
+struct AllTable : Codable, SqlTable {
 	var id: UUID = UUID()
 	var nid: UUID? = nil
 	var n: Int = 0
@@ -47,33 +47,31 @@ struct AllTable : Codable, PrimaryKeyTable {
 	var ie: IntEnum = .val1
 	var nie: IntEnum? = nil
 	typealias Key = UUID
-	static let primaryKey = \AllTable.id
 	static let children = toMany(\JoinTable.allId)
 }
 
 
-struct JoinTable: PrimaryKeyTable2 {
+struct JoinTable: SqlTable {
+	var id: Int = 0
 	var allId: UUID = UUID()
 	var childId: Int = 0
 	var description: String = ""
 	
-	static let primaryKey = (\JoinTable.allId, \JoinTable.childId)
 	static let parent = toOne(AllTable.self, \JoinTable.allId)
 	static let child = toOne(ChildTable.self, \JoinTable.childId)
 	static let foreignKeys: [CqlForeignKeyRelation] = [parent, child]
 }
 
-struct ChildTable: PrimaryKeyTable {
+struct ChildTable: SqlTable {
 	var id: Int = 0
 	var firstName: String = ""
 	var lastName: String = ""
-	static let primaryKey = \ChildTable.id
 	static let parents = toMany(\JoinTable.childId)
 	static let tableIndexes = [TableIndex(columnNames: ["firstName", "lastName"], isUnique: true)]
 }
 
-extension SqlTableRepresentable {
-	static func renamedSchema<T2: SqlTableRepresentable>(to newTable: T2.Type) -> TableSchemaProtocol {
+extension SqlTable {
+	static func renamedSchema<T2: SqlTable>(to newTable: T2.Type) -> TableSchemaProtocol {
 		let schema = self.buildSchema()
 		let newName = String(describing: newTable)
 		return UnknownTableSchema(

@@ -84,13 +84,6 @@ class SchemaMigrationTests: XCTestCase {
 			from: ColumnDefinition(name: "description", sqlType: .text, defaultValue: .null),
 			to: ColumnDefinition(name: "description", sqlType: .text, defaultValue: SqlType.text.defaultValue)), comparison)
 	}
-	func testPrimaryKeyChange() {
-		let comparison = compare(OldPrimaryKeyChange.self, NewPrimaryKeyChange.self)
-		XCTAssertEqual(1, comparison.count)
-		let o = OldPrimaryKeyChange.buildSchema().primaryKeyColumns
-		let n = NewPrimaryKeyChange.buildSchema().primaryKeyColumns
-		verifyDiff(.changedPrimaryKey(from: o, to: n), comparison)
-	}
 	func testColumnMappings() {
 		let comparison = compare(OldModel.self, NewModel.self)
 		let oldSchema = OldModel.buildSchema()
@@ -140,7 +133,7 @@ class SchemaMigrationTests: XCTestCase {
 			XCTFail("incorrect diff: \(diffs[0])")
 		}
 	}
-	private func compare<Old: SqlTableRepresentable, New: SqlTableRepresentable>(_ oldSchema: Old.Type, _ newSchema: New.Type) -> [SchemaTableDifference] {
+	private func compare<Old: SqlTable, New: SqlTable>(_ oldSchema: Old.Type, _ newSchema: New.Type) -> [SchemaTableDifference] {
 		return SchemaTableDifference.compare(differ: DatabaseProvider.sqlite, existing: oldSchema.buildSchema(), expected: newSchema.buildSchema())
 
 	}

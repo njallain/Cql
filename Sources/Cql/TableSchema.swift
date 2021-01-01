@@ -228,7 +228,7 @@ class TableBuilder<T: Codable>: SqlBuilder {
 
 }
 
-extension TableBuilder where T: CqlInitable {
+extension TableBuilder where T: SqlInitable {
 	static func build(table: T) throws -> TableSchemaProtocol {
 		return self.build(T.init)
 	}

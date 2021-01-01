@@ -77,11 +77,10 @@ fileprivate struct Args: Codable {
 }
 
 
-fileprivate struct Parent: PrimaryKeyTable {
+fileprivate struct Parent: SqlTable {
 	var id = UUID()
 	var name = ""
 	
-	static let primaryKey = \Parent.id
 	static let children = toMany(\Child.parentId)
 }
 

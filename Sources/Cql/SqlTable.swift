@@ -8,7 +8,7 @@
 
 import Foundation
 
-public protocol CqlInitable {
+public protocol SqlInitable {
 	init()
 }
 
@@ -16,76 +16,41 @@ public protocol CqlInitable {
 Any Codable object can be used as a table, however implementing SqlTableRepresentable
 allows the primary key and other indexes to be specified
 */
-public protocol SqlTableRepresentable: Codable, CqlInitable {
+public protocol SqlTable: Codable, Identifiable, SqlInitable where ID: SqlComparable {
+	//associatedtype Key:SqlComparable = ID
+	typealias Key = ID
+	var id: ID {get set}
 	static func buildSchema() -> TableSchemaProtocol
 	static var tableIndexes: [TableIndex] {get}
 	static var foreignKeys: [CqlForeignKeyRelation] {get}
 	static var sqlCoder: SqlCoder<Self> {get}
+	static func keyAllocator(_ connection: StorageConnection) throws -> AnyKeyAllocator<ID>
 }
 
-/**
-Protocol to implement if the table has a single primary key
-*/
-public protocol PrimaryKeyTable: SqlTableRepresentable {
-	associatedtype Key: SqlComparable
-	static func keyAllocator(_ connection: StorageConnection) throws -> AnyKeyAllocator<Key>
-	static var primaryKey: WritableKeyPath<Self, Key> {get}
-}
-
-/**
-Protocol to implement if the table has a two part primary key
-*/
-public protocol PrimaryKeyTable2: SqlTableRepresentable {
-	associatedtype Key1: SqlComparable
-	associatedtype Key2: SqlComparable
-	static var primaryKey: (WritableKeyPath<Self, Key1>, WritableKeyPath<Self, Key2>) {get}
-}
 
 public struct JoinKey<L: SqlComparable, R: SqlComparable>: Hashable {
 	public var leftKey: L
 	public var rightKey: R
 }
-public extension PrimaryKeyTable2 {
-	var primaryKeys: JoinKey<Key1, Key2> { JoinKey(leftKey: self[keyPath: Self.primaryKey.0], rightKey: self[keyPath: Self.primaryKey.1]) }
-}
-public extension SqlTableRepresentable {
+
+public extension SqlTable {
+	//static var primaryKey: WritableKeyPath<Self, ID> { \Self.id }
 	static var sqlCoder: SqlCoder<Self> { SqlCoder<Self>() }
 }
-//extension SqlTableRepresentable where Self: PrimaryKeyTable {
-public extension PrimaryKeyTable {
+
+public extension SqlTable {
 	static func buildSchema() -> TableSchemaProtocol {
 		
 		let schema = buildBaseSchema(self)
-		if let keyName = SqlPropertyPath.path(Self(), keyPath: Self.primaryKey) {
-			schema.primaryKey = [keyName]
-		}
+		schema.primaryKey = ["id"]
 		return schema
-	}
-}
-
-public extension SqlTableRepresentable where Self: PrimaryKeyTable2 {
-	static func buildSchema() -> TableSchemaProtocol {
-		let schema = buildBaseSchema(self)
-		let (path1, path2) = Self.primaryKey
-		let t = Self()
-		if let key1 = SqlPropertyPath.path(t, keyPath: path1), let key2 = SqlPropertyPath.path(t, keyPath: path2) {
-			schema.primaryKey = [key1, key2]
-		}
-		return schema
-	}
-}
-
-public extension SqlTableRepresentable {
-	static func buildSchema() -> TableSchemaProtocol {
-		return buildBaseSchema(self)
 	}
 	static var tableIndexes: [TableIndex] { return [] }
 	static var foreignKeys: [CqlForeignKeyRelation] { return [] }
-	
-	
 }
 
-fileprivate func buildBaseSchema<T: SqlTableRepresentable>(_ type: T.Type) -> TableSchema<T> {
+
+fileprivate func buildBaseSchema<T: SqlTable>(_ type: T.Type) -> TableSchema<T> {
 	let schema = TableSchema(name: String(describing: T.self), newRow: T.init)
 	schema.indexes = T.tableIndexes
 	schema.foreignKeys = T.foreignKeys.map { $0.buildForeignKey() }
@@ -99,16 +64,16 @@ fileprivate func buildBaseSchema<T: SqlTableRepresentable>(_ type: T.Type) -> Ta
 public protocol CqlForeignKeyRelation {
 	func buildForeignKey() -> ForeignKey
 }
-public struct RelationToOne<Source: Codable, Target: PrimaryKeyTable> {
+public struct RelationToOne<Source: Codable, Target: SqlTable> {
 	let keyPath: WritableKeyPath<Source, Target.Key>
 	public let join: JoinProperty<Source, Target, Target.Key>
 	init(_ target: Target.Type, _ keyPath: WritableKeyPath<Source, Target.Key>) {
 		self.keyPath = keyPath
-		self.join = JoinProperty(left: keyPath, right: Target.primaryKey)
+		self.join = JoinProperty(left: keyPath, right: \Target.id)
 	}
 }
 
-public struct RelationToOptionalOne<Source: Codable, Target: PrimaryKeyTable> {
+public struct RelationToOptionalOne<Source: Codable, Target: SqlTable> {
 	let keyPath: WritableKeyPath<Source, Target.Key?>
 	//public let join: OptionalJoinProperty<Source, Target, Target.Key>
 	init(_ target: Target.Type, _ keyPath: WritableKeyPath<Source, Target.Key?>) {
@@ -117,36 +82,36 @@ public struct RelationToOptionalOne<Source: Codable, Target: PrimaryKeyTable> {
 	}
 }
 
-public struct RelationToMany<Source: PrimaryKeyTable, Target: Codable> {
+public struct RelationToMany<Source: SqlTable, Target: Codable> {
 	let keyPath: WritableKeyPath<Target, Source.Key>
 	public let join: JoinProperty<Source, Target, Source.Key>
 	init(_ keyPath: WritableKeyPath<Target, Source.Key>, _ target: Target.Type) {
 		self.keyPath = keyPath
-		self.join = JoinProperty(left: Source.primaryKey, right: keyPath)
+		self.join = JoinProperty(left: \Source.id, right: keyPath)
 	}
 }
 
-public struct RelationToOptionalMany<Source: PrimaryKeyTable, Target: Codable> {
+public struct RelationToOptionalMany<Source: SqlTable, Target: Codable> {
 	let keyPath: WritableKeyPath<Target, Source.Key?>
 	public let join: OptionalJoinProperty<Source, Target, Source.Key>
 	init(_ keyPath: WritableKeyPath<Target, Source.Key?>, _ target: Target.Type) {
 		self.keyPath = keyPath
-		self.join = OptionalJoinProperty(left: Source.primaryKey, right: keyPath)
+		self.join = OptionalJoinProperty(left: \Source.id, right: keyPath)
 	}
 }
-extension RelationToOne: CqlForeignKeyRelation where Source: SqlTableRepresentable {
+extension RelationToOne: CqlForeignKeyRelation where Source: SqlTable {
 	public func buildForeignKey() -> ForeignKey {
 		guard let keyName = SqlPropertyPath.path(Source(), keyPath: self.keyPath),
-			let pkName = SqlPropertyPath.path(Target(), keyPath: Target.primaryKey) else {
+			let pkName = SqlPropertyPath.path(Target(), keyPath: \Target.id) else {
 			fatalError("could not determine property path for \(self.keyPath)")
 		}
 		return ForeignKey(columnName: keyName, foreignTable: String(describing:Target.self), foreignColumn: pkName)
 	}
 }
-extension RelationToOptionalOne: CqlForeignKeyRelation where Source: SqlTableRepresentable {
+extension RelationToOptionalOne: CqlForeignKeyRelation where Source: SqlTable {
 	public func buildForeignKey() -> ForeignKey {
 		guard let keyName = SqlPropertyPath.path(Source(), keyPath: self.keyPath),
-			let pkName = SqlPropertyPath.path(Target(), keyPath: Target.primaryKey) else {
+			let pkName = SqlPropertyPath.path(Target(), keyPath: \Target.id) else {
 			fatalError("could not determine property path for \(self.keyPath)")
 		}
 		return ForeignKey(columnName: keyName, foreignTable: String(describing:Target.self), foreignColumn: pkName)
@@ -154,7 +119,7 @@ extension RelationToOptionalOne: CqlForeignKeyRelation where Source: SqlTableRep
 }
 
 
-public extension PrimaryKeyTable {
+public extension SqlTable {
 	static func toMany<Target: Codable>(_ keyPath: WritableKeyPath<Target, Key>) -> RelationToMany<Self, Target> {
 		return RelationToMany(keyPath, Target.self)
 	}
@@ -164,11 +129,11 @@ public extension PrimaryKeyTable {
 }
 
 public extension Encodable where Self: Decodable {
-	static func toOne<Target: PrimaryKeyTable>(_ target: Target.Type, _ keyPath: WritableKeyPath<Self, Target.Key>) -> RelationToOne<Self, Target> {
+	static func toOne<Target: SqlTable>(_ target: Target.Type, _ keyPath: WritableKeyPath<Self, Target.Key>) -> RelationToOne<Self, Target> {
 		let relation = RelationToOne(target, keyPath)
 		return relation
 	}
-	static func toOne<Target: PrimaryKeyTable>(_ target: Target.Type, _ keyPath: WritableKeyPath<Self, Target.Key?>) -> RelationToOptionalOne<Self, Target> {
+	static func toOne<Target: SqlTable>(_ target: Target.Type, _ keyPath: WritableKeyPath<Self, Target.Key?>) -> RelationToOptionalOne<Self, Target> {
 		let relation = RelationToOptionalOne(target, keyPath)
 		return relation
 	}

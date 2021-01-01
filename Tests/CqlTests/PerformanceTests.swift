@@ -256,14 +256,13 @@ class PerformanceTests: XCTestCase {
 	}
 }
 
-fileprivate struct SmallIntId: PrimaryKeyTable {
+fileprivate struct SmallIntId: SqlTable {
 	var id: Int = 0
 	var name: String = ""
 	
-	static let primaryKey = \SmallIntId.id
 }
 
-fileprivate struct MediumIntId: PrimaryKeyTable {
+fileprivate struct MediumIntId: SqlTable {
 	var id: Int = 0
 	var title: String = ""
 	var startDate = Date(timeIntervalSinceReferenceDate: 0)
@@ -272,10 +271,9 @@ fileprivate struct MediumIntId: PrimaryKeyTable {
 	var position: Double = 0
 	var priority = 0
 	
-	static let primaryKey = \MediumIntId.id
 }
 
-fileprivate struct MediumIntIdCustom: PrimaryKeyTable {
+fileprivate struct MediumIntIdCustom: SqlTable {
 	var id: Int = 0
 	var title: String = ""
 	var startDate = Date(timeIntervalSinceReferenceDate: 0)
@@ -284,7 +282,6 @@ fileprivate struct MediumIntIdCustom: PrimaryKeyTable {
 	var position: Double = 0
 	var priority = 0
 	
-	static let primaryKey = \MediumIntIdCustom.id
 	private static func encode(_ object: MediumIntIdCustom, to builder: SqlBuilder) throws {
 		builder.add(name: "id", value: object.id)
 		builder.add(name: "title", value: object.title)
@@ -308,16 +305,13 @@ fileprivate struct MediumIntIdCustom: PrimaryKeyTable {
 	}
 	static let sqlCoder = SqlCoder<MediumIntIdCustom>(encode: MediumIntIdCustom.encode, decode: MediumIntIdCustom.decode)
 }
-fileprivate struct SmallStringId: PrimaryKeyTable {
+fileprivate struct SmallStringId: SqlTable {
 	var id: String = ""
 	var name: String = ""
 	
-	static let primaryKey = \SmallStringId.id
 }
 
-fileprivate struct SmallUuidId: PrimaryKeyTable {
+fileprivate struct SmallUuidId: SqlTable {
 	var id: UUID = UUID()
 	var name: String = ""
-	
-	static let primaryKey = \SmallUuidId.id
 }

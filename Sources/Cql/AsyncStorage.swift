@@ -58,12 +58,8 @@ public class AsyncStorage: ChangeSetSource {
 			try storable.save(to: $0)
 		}
 	}
-	public func get<T: PrimaryKeyTable>(_ type: T.Type, _ key: T.Key) -> AnyPublisher<T, Error> {
+	public func get<T: SqlTable>(_ type: T.Type, _ key: T.Key) -> AnyPublisher<T, Error> {
 		return worker.get(queue: responseQueue, type, key)
-	}
-	public func get<T: PrimaryKeyTable2>(_ type: T.Type, _ id1: T.Key1, _ id2: T.Key2) -> AnyPublisher<T, Error> {
-		return worker.get(queue: responseQueue, type, id1, id2)
-
 	}
 
 	public func query<T: Codable>(where query: Query<T>) -> AnyPublisher<[T], Error> {
@@ -72,10 +68,7 @@ public class AsyncStorage: ChangeSetSource {
 	public func query<T: Codable>(where query: JoinedQuery<T>) -> AnyPublisher<[T], Error> {
 		return worker.query(queue: responseQueue, where: query)
 	}
-	public func changeSet<T: PrimaryKeyTable>(for type: T.Type) -> ChangeSet<T> {
-		return self.worker.changeSet(for: type)
-	}
-	public func changeSet<T: PrimaryKeyTable2>(for type: T.Type) -> ChangeSet2<T> {
+	public func changeSet<T: SqlTable>(for type: T.Type) -> ChangeSet<T> {
 		return self.worker.changeSet(for: type)
 	}
 }
@@ -130,7 +123,7 @@ fileprivate class StorageWorker {
 		}
 		return pub
 	}
-	public func get<T: PrimaryKeyTable>(queue: DispatchQueue, _ type: T.Type, _ key: T.Key) -> AnyPublisher<T, Error> {
+	public func get<T: SqlTable>(queue: DispatchQueue, _ type: T.Type, _ key: T.Key) -> AnyPublisher<T, Error> {
 		let pub = future(resultType: type, responseQueue: queue) { conn in
 			guard let res = try conn.get(type, key) else {
 				throw NotFoundError(T.self, id: key)
@@ -138,16 +131,6 @@ fileprivate class StorageWorker {
 			return .success(res)
 		}
 		return pub
-	}
-	public func get<T: PrimaryKeyTable2>(queue: DispatchQueue, _ type: T.Type, _ id1: T.Key1, _ id2: T.Key2) -> AnyPublisher<T, Error> {
-		let pub = future(resultType: type, responseQueue: queue) { conn in
-			//dlog("sending get value, queue: \(queueRole)")
-			guard let r = try conn.get(type, id1, id2) else { throw NotFoundError(type, id: (id1, id2)) }
-			return .success(r)
-		}
-		return pub
-//		let get = AsyncResult(publisher: pub, initialValue: nil, queue: responseQueue)
-//		return get
 	}
 	/**
 	Executes the given action on the work queue and sends the result back on the response queue.
@@ -179,7 +162,7 @@ fileprivate class StorageWorker {
 		}
 		return pub
 	}
-	public func changeSet<T: PrimaryKeyTable>(for type: T.Type) -> ChangeSet<T> {
+	public func changeSet<T: SqlTable>(for type: T.Type) -> ChangeSet<T> {
 		guard let storage = self.storage else {
 			// initialization is not yet complete, create a change set with a lazy key allocator
 			// that won't so a the allocator will not be needed until an actual insert occurs
@@ -191,12 +174,6 @@ fileprivate class StorageWorker {
 			}
 			let allocator = AnyKeyAllocator(nextKey: nextKey)
 			return ChangeSet<T>(allocator)
-		}
-		return storage.changeSet(for: type)
-	}
-	public func changeSet<T: PrimaryKeyTable2>(for type: T.Type) -> ChangeSet2<T> {
-		guard let storage = self.storage else {
-			fatalError("initialization not complete")
 		}
 		return storage.changeSet(for: type)
 	}

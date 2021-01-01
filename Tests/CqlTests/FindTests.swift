@@ -26,19 +26,6 @@ public class FindTests: AsyncStorageTestCase {
 		}
 		XCTAssertEqual(4, val.id)
 	}
-	func testGetJoin() {
-		reset()
-		try! conn.insert(SampleChild(sampleId: 1, childId: 2))
-		let storage = AsyncStorage { self.mem }
-		let expectGet = expectation(description: "get")
-		let result = storage.get(SampleChild.self, 1,2)
-		guard let val = wait(for: result, expect: [expectGet]) else {
-			XCTFail("nil result")
-			return
-		}
-		XCTAssertNotNil(val)
-		XCTAssertEqual(1, val.sampleId)
-		XCTAssertEqual(2, val.childId)	}
 
 	func testQuery() {
 		logEnabled = true

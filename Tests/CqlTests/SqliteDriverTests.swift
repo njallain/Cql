@@ -134,7 +134,7 @@ class SqliteDriverTests: XCTestCase {
 			],
 			primaryKey: "name", indexes: [], prototypeRow: SqliteTestObj())
 		let createSql = SqliteDriver.sqlForCreate(table: schema)
-		XCTAssertEqual("CREATE TABLE Stuff(name TEXT default \'\' NOT NULL, num NUM default null, PRIMARY KEY (name));", createSql)
+		XCTAssertEqual("CREATE TABLE Stuff(name TEXT default \'\' NOT NULL, num NUM default null, PRIMARY KEY (name)) WITHOUT ROWID;", createSql)
 	}
 	
 	func testCreateIndexSql() {

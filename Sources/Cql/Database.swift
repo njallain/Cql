@@ -34,28 +34,16 @@ public struct SchemaDefiner {
 	*/
 	public static func codable<T: Codable>(_ newRow: @escaping () -> T) -> SchemaDefiner {
 		let o = newRow()
-		if o as? CqlInitable != nil {
+		if o as? SqlInitable != nil {
 			fatalError("SqlTableRepresentables should be defined with .table")
 		}
 		let schema = TableBuilder.build(newRow)
 		return SchemaDefiner(schema)
 	}
 	/**
-	Defines the schema for a PrimaryKeyTable
+	Defines the schema for a SqlTable
 	*/
-	public static func table<T: PrimaryKeyTable>(_ type: T.Type) -> SchemaDefiner {
-		return SchemaDefiner(type.buildSchema())
-	}
-	/**
-	Defines the schema for a PrimaryKeyTable2
-	*/
-	public static func table<T: PrimaryKeyTable2>(_ type: T.Type) -> SchemaDefiner {
-		return SchemaDefiner(type.buildSchema())
-	}
-	/**
-	Defines the schema for a SqlTableRepresentable
-  */
-	public static func table<T: SqlTableRepresentable>(_ type: T.Type) -> SchemaDefiner {
+	public static func table<T: SqlTable>(_ type: T.Type) -> SchemaDefiner {
 		return SchemaDefiner(type.buildSchema())
 	}
 	private init(_ schema: TableSchemaProtocol) {
@@ -178,7 +166,7 @@ public class Database: Storage {
 		}
 	}
 	
-	public func keyAllocator<T>(for type: T.Type) -> AnyKeyAllocator<T.Key> where T : PrimaryKeyTable {
+	public func keyAllocator<T>(for type: T.Type) -> AnyKeyAllocator<T.Key> where T : SqlTable {
 		let name = Database.tableName(of: type)
 		if let allocator = keyAllocators[name] {
 			return allocator as! AnyKeyAllocator<T.Key>
@@ -243,10 +231,7 @@ public class SqlConnection: StorageConnection {
 		let sql = "update \(schema.name) set \(setSql) \(whereSql)"
 		try driver.execute(sql: sql, arguments: args)
 	}
-	public func update<T: PrimaryKeyTable>(_ rows: [T]) throws {
-		try update(keyedRows: rows)
-	}
-	public func update<T: PrimaryKeyTable2>(_ rows: [T]) throws {
+	public func update<T: SqlTable>(_ rows: [T]) throws {
 		try update(keyedRows: rows)
 	}
 	private func update<T: Codable>(keyedRows rows: [T]) throws {
@@ -316,7 +301,7 @@ public class SqlConnection: StorageConnection {
 		}
 	}
 	
-	public func nextId<T>(_ type: T.Type) throws -> Int where T : PrimaryKeyTable, T.Key == Int {
+	public func nextId<T>(_ type: T.Type) throws -> Int where T : SqlTable, T.Key == Int {
 		let schema = database.schema(for: type)
 		let sql = "select max(\(schema.primaryKey[0])) as maxId from \(schema.name)"
 		let cursor = try driver.query(sql: sql, bind: ["maxId"], arguments: [])

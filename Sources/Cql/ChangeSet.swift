@@ -41,97 +41,52 @@ public extension RowChangeSet {
 	}
 }
 
-public class ChangeSet<T: PrimaryKeyTable>: RowChangeSet {
-		private var deleted = [T.Key:T]()
-		private var updated = [T.Key:T]()
-		private var created = [T.Key:T]()
-		private var keyAllocator: AnyKeyAllocator<T.Key>
-		
-		public init<A: KeyAllocator>(_ keyAllocator: A) where A.Key == T.Key {
-			self.keyAllocator = AnyKeyAllocator(keyAllocator)
-		}
-		public init(_ keyAllocator: AnyKeyAllocator<T.Key>) {
-			self.keyAllocator = keyAllocator
-		}
-		public var newRows: [T] { Array(created.values) }
-		public var updatedRows: [T] { Array(updated.values) }
-		public var deletedRows: [T] { Array(deleted.values) }
-		
-		@discardableResult
-		public func new(initializer: (inout T) -> Void) -> T {
-			var row = T()
-			let key = keyAllocator.next()
-			row[keyPath: T.primaryKey] = key
-			initializer(&row)
-			created[key] = row
-			return row
-		}
-		public func updated(_ row: T) {
-			let key = row[keyPath: T.primaryKey]
-			if created[key] != nil { created[key] = row }
-			else if deleted[key] == nil { updated[key] = row }
-		}
-		public func deleted(_ row: T) {
-			let key = row[keyPath: T.primaryKey]
-			created.removeValue(forKey: key)
-			updated.removeValue(forKey: key)
-			deleted[key] = row
-		}
-		public func saveUpdated(connection: StorageConnection) throws {
-			try connection.update(self.updatedRows)
-		}
-		public func saveDeleted(connection: StorageConnection) throws {
-			for row in deletedRows { try connection.delete(row) }
-		}
+public class ChangeSet<T: SqlTable>: RowChangeSet {
+	private var deleted = [T.Key:T]()
+	private var updated = [T.Key:T]()
+	private var created = [T.Key:T]()
+	private var keyAllocator: AnyKeyAllocator<T.Key>
+	
+	public init<A: KeyAllocator>(_ keyAllocator: A) where A.Key == T.Key {
+		self.keyAllocator = AnyKeyAllocator(keyAllocator)
 	}
-
-	public class ChangeSet2<T: PrimaryKeyTable2>: RowChangeSet {
-		struct Key: Hashable {
-			let key1: T.Key1
-			let key2: T.Key2
-			init(_ row: T) {
-				key1 = row[keyPath: T.primaryKey.0]
-				key2 = row[keyPath: T.primaryKey.1]
-			}
-		}
-		private var deleted = [Key:T]()
-		private var updated = [Key:T]()
-		private var created = [Key:T]()
-		public init() {
-		}
-		public var newRows: [T] { Array(created.values) }
-		public var updatedRows: [T] { Array(updated.values) }
-		public var deletedRows: [T] { Array(deleted.values) }
-		
-		@discardableResult
-		public func new(initializer: (inout T) -> Void) -> T {
-			var row = T()
-			initializer(&row)
-			created[Key(row)] = row
-			return row
-		}
-		public func updated(_ row: T) {
-			let key = Key(row)
-			if created[key] != nil { created[key] = row }
-			else if deleted[key] == nil { updated[key] = row }
-		}
-		public func deleted(_ row: T) {
-			let key = Key(row)
-			created.removeValue(forKey: key)
-			updated.removeValue(forKey: key)
-			deleted[key] = row
-		}
-
-		public func saveUpdated(connection: StorageConnection) throws {
-			try connection.update(self.updatedRows)
-		}
-		public func saveDeleted(connection: StorageConnection) throws {
-			for row in deletedRows { try connection.delete(row) }
-		}
+	public init(_ keyAllocator: AnyKeyAllocator<T.Key>) {
+		self.keyAllocator = keyAllocator
 	}
+	public var newRows: [T] { Array(created.values) }
+	public var updatedRows: [T] { Array(updated.values) }
+	public var deletedRows: [T] { Array(deleted.values) }
+	
+	@discardableResult
+	public func new(initializer: (inout T) -> Void) -> T {
+		var row = T()
+		let key = keyAllocator.next()
+		row.id = key
+		initializer(&row)
+		created[key] = row
+		return row
+	}
+	public func updated(_ row: T) {
+		let key = row.id
+		if created[key] != nil { created[key] = row }
+		else if deleted[key] == nil { updated[key] = row }
+	}
+	public func deleted(_ row: T) {
+		let key = row.id
+		created.removeValue(forKey: key)
+		updated.removeValue(forKey: key)
+		deleted[key] = row
+	}
+	public func saveUpdated(connection: StorageConnection) throws {
+		try connection.update(self.updatedRows)
+	}
+	public func saveDeleted(connection: StorageConnection) throws {
+		for row in deletedRows { try connection.delete(row) }
+	}
+}
+
 
 public protocol ChangeSetSource {
-	func changeSet<T: PrimaryKeyTable>(for type: T.Type) -> ChangeSet<T>
-	func changeSet<T: PrimaryKeyTable2>(for type: T.Type) -> ChangeSet2<T>
+	func changeSet<T: SqlTable>(for type: T.Type) -> ChangeSet<T>
 }
 

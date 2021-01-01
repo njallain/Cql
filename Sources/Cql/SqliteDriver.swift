@@ -253,17 +253,10 @@ class SqliteDriver: SqlDriver {
 		let cols = table.columns.map { sqlForCreate(column: $0) }
 		let fks = table.foreignKeys.map { sqlForCreate(foreignKey: $0 )}
 		let tableCols = (cols + fks).joined(separator: ", ")
-//		var withoutRowId = ""
-//		if table.primaryKey.count == 1 {
-//			if let pkCol = table.columns.first(where: { $0.name == table.primaryKey[0] }) {
-//				if pkCol.sqlType != .int {
-//					withoutRowId = " WITHOUT ROWID"
-//				}
-//			}
-//		}
+		let withoutRowId = !table.primaryKey.isEmpty ? " WITHOUT ROWID" : ""
 		let pks = table.primaryKey.count > 0 ? ", PRIMARY KEY (\(table.primaryKey.joined(separator: ", ")))" : ""
-//		return "CREATE TABLE \(table.name)(\(tableCols)\(pks))\(withoutRowId);"
-		return "CREATE TABLE \(tableName)(\(tableCols)\(pks));"
+		return "CREATE TABLE \(tableName)(\(tableCols)\(pks))\(withoutRowId);"
+//		return "CREATE TABLE \(tableName)(\(tableCols)\(pks));"
 	}
 	
 	private static func sqlForCreate(foreignKey: ForeignKey) -> String {

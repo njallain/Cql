@@ -63,7 +63,7 @@ public class InsertUpdateDeleteTests: AsyncStorageTestCase {
 
 fileprivate class TestChangeSet: Storable {
 	let sample: ChangeSet<Sample>
-	let child: ChangeSet2<SampleChild>
+	let child: ChangeSet<SampleChild>
 	init(storage: AsyncStorage) {
 		sample = storage.changeSet(for: Sample.self)
 		child = storage.changeSet(for: SampleChild.self)

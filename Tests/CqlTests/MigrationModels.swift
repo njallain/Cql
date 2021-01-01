@@ -9,81 +9,74 @@
 import Foundation
 @testable import Cql
 
-struct OldModel: PrimaryKeyTable {
+struct OldModel: SqlTable {
 	var id: Int = 0
 	var name: String = ""
 	var notes: String = ""
 	static let tableIndexes = [TableIndex(columnNames: ["name"], isUnique: true)]
-	static let primaryKey = \OldModel.id
 	static let children = toMany(\OldJoinModel.parentId)
 }
 
-struct NewModel: PrimaryKeyTable {
+struct NewModel: SqlTable {
 	var id: Int = 0
 	var other: UUID = UUID()
 	var notes: String = ""
 	static let tableIndexes = [TableIndex(columnNames: ["other"], isUnique: false)]
-	static let primaryKey = \NewModel.id
 }
 
-struct OldModelRename: PrimaryKeyTable {
+struct OldModelRename: SqlTable {
 	var id: Int = 0
 	var name: String = ""
 	var notes: String = ""
-	static let primaryKey = \OldModelRename.id
 }
-struct NewModelRename: PrimaryKeyTable {
+struct NewModelRename: SqlTable {
 	var id: Int = 0
 	var fullName: String = ""
 	var notes: String = ""
-	static let primaryKey = \NewModelRename.id
 }
-struct OldJoinModel: PrimaryKeyTable2 {
+struct OldJoinModel: SqlTable {
+	var id: Int = 0
 	var parentId: Int = 0
 	var childId: Int = 0
-	static let primaryKey = (\OldJoinModel.parentId, \OldJoinModel.childId)
 	static let parent = toOne(OldModel.self, \OldJoinModel.parentId)
 	static let child = toOne(ChildModel.self, \OldJoinModel.childId)
 	static let foreignKeys: [CqlForeignKeyRelation] = [parent, child]
 }
 
-struct NewJoinModel: PrimaryKeyTable2 {
+struct NewJoinModel: SqlTable {
+	var id: Int = 0
 	var parentId: Int = 0
 	var childId: Int = 0
-	static let primaryKey = (\NewJoinModel.parentId, \NewJoinModel.childId)
 	static let parent = toOne(NewModel.self, \NewJoinModel.parentId)
 	static let child = toOne(ChildModel.self, \NewJoinModel.childId)
 	static let foreignKeys: [CqlForeignKeyRelation] = [parent, child]
 }
 
-struct ChildModel: PrimaryKeyTable {
+struct ChildModel: SqlTable {
 	var id: Int = 0
-	static let primaryKey = \ChildModel.id
 	static let parents = toMany(\OldJoinModel.childId)
 }
 
-struct OldDefaultChange: PrimaryKeyTable {
+struct OldDefaultChange: SqlTable {
 	var id: Int = 0
 	var name: String = ""
 	var description: String? = nil
-	static let primaryKey = \OldDefaultChange.id
 }
 
-struct NewDefaultChange: PrimaryKeyTable {
+struct NewDefaultChange: SqlTable {
 	var id: Int = 0
 	var name: String = "test"
 	var description: String = ""
-	static let primaryKey = \NewDefaultChange.id
 }
 
-struct OldPrimaryKeyChange: PrimaryKeyTable {
+struct OldPrimaryKeyChange: SqlTable {
+	var id: Int = 0
 	var id1: Int = 0
 	var id2: Int = 0
-	static let primaryKey = \OldPrimaryKeyChange.id1
 }
 
-struct NewPrimaryKeyChange: PrimaryKeyTable {
+struct NewPrimaryKeyChange: SqlTable {
+	var id: Int = 0
 	var id1: Int = 0
 	var id2: Int = 0
-	static let primaryKey = \NewPrimaryKeyChange.id2
 }

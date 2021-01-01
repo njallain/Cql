@@ -46,7 +46,7 @@ public class MemoryStorage: Storage {
 		let key = String(describing: T.self)
 		allRows[key] = rows
 	}
-	public func keyAllocator<T>(for type: T.Type) -> AnyKeyAllocator<T.Key> where T : PrimaryKeyTable {
+	public func keyAllocator<T>(for type: T.Type) -> AnyKeyAllocator<T.Key> where T : SqlTable {
 		let tkey = String(describing: T.self)
 		if let allocator = keyAllocators[tkey] {
 			return allocator as! AnyKeyAllocator<T.Key>
@@ -101,25 +101,12 @@ public class MemoryConnection: StorageConnection {
 		}
 		mem.set(rows: newRows)
 	}
-	public func update<T: PrimaryKeyTable>(_ rows: [T]) throws {
-		let updatesById = Dictionary(grouping: rows, by: {$0[keyPath: T.primaryKey]})
+	public func update<T: SqlTable>(_ rows: [T]) throws {
+		let updatesById = Dictionary(grouping: rows, by: {$0.id})
 		let rows = mem.rows(T.self)
 		var newRows = [T]()
 		for row in rows {
-			if let updated = updatesById[row[keyPath: T.primaryKey]]?.first {
-				newRows.append(updated)
-			} else {
-				newRows.append(row)
-			}
-		}
-		mem.set(rows: newRows)
-	}
-	public func update<T: PrimaryKeyTable2>(_ rows: [T]) throws {
-		let updatesById = Dictionary(grouping: rows, by: {$0.primaryKeys})
-		let rows = mem.rows(T.self)
-		var newRows = [T]()
-		for row in rows {
-			if let updated = updatesById[row.primaryKeys]?.first {
+			if let updated = updatesById[row.id]?.first {
 				newRows.append(updated)
 			} else {
 				newRows.append(row)
@@ -186,8 +173,8 @@ public class MemoryConnection: StorageConnection {
 		}
 	}
 	
-	public func nextId<T>(_ type: T.Type) throws -> Int where T : PrimaryKeyTable, T.Key == Int {
-		let maxId = mem.rows(type).map({$0[keyPath: type.primaryKey]}).max() ?? 0
+	public func nextId<T>(_ type: T.Type) throws -> Int where T : SqlTable, T.Key == Int {
+		let maxId = mem.rows(type).map({$0.id}).max() ?? 0
 		return maxId + 1
 	}
 }

@@ -50,19 +50,12 @@ class TableSchemaTests: XCTestCase {
 	func testIndexableTable() {
 		let schema = IndexedObj.buildSchema()
 		XCTAssertEqual(1, schema.primaryKey.count)
-		XCTAssertEqual("s", schema.primaryKey[0])
+		XCTAssertEqual("id", schema.primaryKey[0])
 		XCTAssertEqual(2, schema.indexes.count)
 		XCTAssertEqual(["a"], schema.indexes[0].columnNames)
 		XCTAssertEqual(true, schema.indexes[0].isUnique)
 		XCTAssertEqual(["b", "c"], schema.indexes[1].columnNames)
 		XCTAssertEqual(false, schema.indexes[1].isUnique)
-	}
-	
-	func testTwoPartKeyTable() {
-		let schema = DoubleKey.buildSchema()
-		XCTAssertEqual(2, schema.primaryKey.count)
-		XCTAssertEqual("id1", schema.primaryKey[0])
-		XCTAssertEqual("id2", schema.primaryKey[1])
 	}
 	
 	func testForeignKeys() {
@@ -86,36 +79,36 @@ class TableSchemaTests: XCTestCase {
 }
 
 
-fileprivate struct IndexedObj: Codable, PrimaryKeyTable {
+fileprivate struct IndexedObj: Codable, SqlTable {
 	var id: Int = 0
 	var s: String = ""
 	var a: Int = 0
 	var b: Int = 0
 	var c: Int = 0
 	
-	static let primaryKey = \IndexedObj.s
 	static let tableIndexes = [
 		TableIndex(columnNames: ["a"], isUnique: true),
 		TableIndex(columnNames: ["b","c"], isUnique: false)
 	]
 }
 
-fileprivate struct DoubleKey: Codable, PrimaryKeyTable2 {
+fileprivate struct DoubleKey: SqlTable {
+	var id: Int = 0
 	var id1: Int = 0
 	var id2: String = ""
 	var n: String = ""
 	
-	static let primaryKey = (\DoubleKey.id1, \DoubleKey.id2)
 }
 
-fileprivate struct Parent: PrimaryKeyTable {
+fileprivate struct Parent: SqlTable {
 	var id: Int = 0
 	var name: String = ""
 	
-	static let primaryKey = \Parent.id
 }
 
-fileprivate struct FkObj: SqlTableRepresentable {
+fileprivate struct FkObj: SqlTable {
+	
+	var id: Int = 0
 	var t: String = ""
 	var indexedId: Int = 0
 	

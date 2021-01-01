@@ -90,7 +90,7 @@ class PredicateBuilderTests: XCTestCase {
 	}
 }
 
-fileprivate struct CheckMe: PrimaryKeyTable {
+fileprivate struct CheckMe: SqlTable {
 	var str: String = ""
 	var n: Int = 0
 	var f: Double = 0
@@ -98,7 +98,6 @@ fileprivate struct CheckMe: PrimaryKeyTable {
 	var se = StringEnum.val1
 	var ne = IntEnum.val1
 	
-	static let primaryKey = \CheckMe.id
 	static let relatedObjs = toMany(\RelatedObject.checkMeId)
 }
 

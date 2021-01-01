@@ -188,11 +188,11 @@ fileprivate class TestMigrator: SchemaMigrator {
 		return nil
 	}
 	private static func createProjectItems(_ context: MigrationContext, _ difference: SchemaDifference) throws {
-		let ins = "insert into \(context.tableName(of: ProjectItem.self)) (projectId, itemId, position) select projectId, id, position from \(Database.tableName(of: Item.self))"
+		let ins = "insert into \(context.tableName(of: ProjectItem.self)) (id, projectId, itemId, position) select id, projectId, id, position from \(Database.tableName(of: Item.self))"
 		try context.driver.execute(sql: ins, arguments: [])
 	}
 	private static func reIdComments(_ context: MigrationContext, _ difference: SchemaDifference) throws {
-		let ins = "insert into \(context.tableName(of: Comment.self)) (id, body, itemId) select rowid, body, itemId from \(Database.tableName(of: Comment.self))"
+		let ins = "insert into \(context.tableName(of: Comment.self)) (id, body, itemId) select id, body, itemId from \(Database.tableName(of: Comment.self))"
 		try context.driver.execute(sql: ins, arguments: [])
 	}
 }
@@ -203,82 +203,74 @@ fileprivate enum ItemState: Int, SqlIntEnum {
 }
 
 // old schema
-fileprivate struct _Project: PrimaryKeyTable {
+fileprivate struct _Project: SqlTable {
 	var id: Int = 0
 	var name = ""
 	var details = ""
-	static let primaryKey = \_Project.id
 	static let items = toMany(\_Item.projectId)
 }
 
-fileprivate struct _Item: PrimaryKeyTable {
+fileprivate struct _Item: SqlTable {
 	var id = 0
 	var title = ""
 	var projectId = 0
 	var state = 0
 	var position = Double(0)
 	static let project = toOne(_Project.self, \.projectId)
-	static let primaryKey = \_Item.id
 }
 
-fileprivate struct _Comment: PrimaryKeyTable {
+fileprivate struct _Comment: SqlTable {
 	var id = UUID.defaultValue
 	var body = ""
 	var itemId = 0
 	static let item = toOne(_Item.self, \.itemId)
-	static let primaryKey = \_Comment.id
 }
-fileprivate struct OldAttachment: PrimaryKeyTable {
+fileprivate struct OldAttachment: SqlTable {
 	var id = 0
 	var data = Data()
 	var contentType = ""
 	var itemId = 0
 	static let item = toOne(_Item.self, \.itemId)
-	static let primaryKey = \OldAttachment.id
 }
 
 // new schema
 // rename column
-fileprivate struct Project: PrimaryKeyTable {
+fileprivate struct Project: SqlTable {
 	var id: Int = 0
 	var title = ""	// renamed from name
 	var details = ""
-	static let primaryKey = \Project.id
 	static let items = toMany(\ProjectItem.projectId)
 }
 
 // new default
-fileprivate struct Item: PrimaryKeyTable {
+fileprivate struct Item: SqlTable {
 	var id = 0
 	var title = ""
 	var position = Double(0)
 	var state = ItemState.incomplete	// still an int but default should be -1 now
-	static let primaryKey = \Item.id
 }
 
 // introduce join
-fileprivate struct ProjectItem: PrimaryKeyTable2 {
+fileprivate struct ProjectItem: SqlTable {
+	var id: Int = 0
 	var projectId = 0
 	var itemId = 0
 	var position: Double = 0
-	static let primaryKey = (\ProjectItem.projectId, \ProjectItem.itemId)
 }
 
 // rename table
-fileprivate struct Attachment: PrimaryKeyTable{
+fileprivate struct Attachment: SqlTable{
 	var id = 0
 	var data = Data()
 	var contentType = ""
 	var itemId = 0
 	static let item = toOne(Item.self, \.itemId)
-	static let primaryKey = \Attachment.id
 }
 
 // primary key change
-fileprivate struct Comment: PrimaryKeyTable {
-	var id = 0
+fileprivate struct Comment: SqlTable {
+	var id = UUID.defaultValue
 	var body = ""
 	var itemId = 0
 	static let item = toOne(Item.self, \.itemId)
-	static let primaryKey = \Comment.id
 }
