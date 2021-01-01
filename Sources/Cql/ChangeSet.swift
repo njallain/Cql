@@ -41,7 +41,7 @@ public class ChangeSet<T: SqlTable>: ChangeSetProtocol {
 	public var updatedRows: [T] { Array(updated.values) }
 	public var deletedRows: [T] { Array(deleted.values) }
 	
-	var hasChanges: Bool {
+	public var hasChanges: Bool {
 		!(created.isEmpty && updated.isEmpty && deleted.isEmpty)
 	}
 	
