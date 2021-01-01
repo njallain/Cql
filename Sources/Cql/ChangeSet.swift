@@ -41,6 +41,10 @@ public class ChangeSet<T: SqlTable>: ChangeSetProtocol {
 	public var updatedRows: [T] { Array(updated.values) }
 	public var deletedRows: [T] { Array(deleted.values) }
 	
+	var hasChanges: Bool {
+		!(created.isEmpty && updated.isEmpty && deleted.isEmpty)
+	}
+	
 	@discardableResult
 	public func new(initializer: (inout T) -> Void) -> T {
 		var row = T()

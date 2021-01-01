@@ -18,9 +18,11 @@ class ChangeSetTests: XCTestCase {
 	
 	func testNew() {
 		let changeSet = storage.changeSet(for: AllTable.self)
+		XCTAssertFalse(changeSet.hasChanges)
 		var row = changeSet.new {
 			$0.s = "test"
 		}
+		XCTAssertTrue(changeSet.hasChanges)
 		row.n = 5
 		changeSet.updated(row)
 		XCTAssertEqual(1, changeSet.newRows.count)
