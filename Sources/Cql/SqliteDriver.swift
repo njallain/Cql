@@ -467,7 +467,7 @@ extension SqlType {
 		case .blob, .uuid:
 			return ""
 		case .int, .bool:
-			return "NUM"
+			return "INTEGER"
 		case .real, .date:
 			return "REAL"
 		case .text:

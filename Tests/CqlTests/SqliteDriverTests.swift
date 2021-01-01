@@ -119,8 +119,8 @@ class SqliteDriverTests: XCTestCase {
 		}
 	}
 	func testSqlTypes() {
-		XCTAssertEqual("NUM", SqlType.int.sqliteType)
-		XCTAssertEqual("NUM", SqlType.bool.sqliteType)
+		XCTAssertEqual("INTEGER", SqlType.int.sqliteType)
+		XCTAssertEqual("INTEGER", SqlType.bool.sqliteType)
 		XCTAssertEqual("", SqlType.blob.sqliteType)
 		XCTAssertEqual("", SqlType.uuid.sqliteType)
 		XCTAssertEqual("REAL", SqlType.real.sqliteType)
@@ -134,7 +134,7 @@ class SqliteDriverTests: XCTestCase {
 			],
 			primaryKey: "name", indexes: [], prototypeRow: SqliteTestObj())
 		let createSql = SqliteDriver.sqlForCreate(table: schema)
-		XCTAssertEqual("CREATE TABLE Stuff(name TEXT default \'\' NOT NULL, num NUM default null, PRIMARY KEY (name)) WITHOUT ROWID;", createSql)
+		XCTAssertEqual("CREATE TABLE Stuff(name TEXT default \'\' NOT NULL, num INTEGER default null, PRIMARY KEY (name)) WITHOUT ROWID;", createSql)
 	}
 	
 	func testCreateIndexSql() {
